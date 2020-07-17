@@ -1,19 +1,16 @@
 use gl::types::*;
 
-mod window;
-use window::*;
-
 mod shader_program;
 use shader_program::*;
 
+use crate::window::*;
+
 pub struct Render{
-    window : Window
+
 }
 
 impl Render{
     pub fn new(width : u32, height : u32) -> Render{
-        let window = Window::open(WindowParameters { width, height, title : String::from("title")});
-
         let frag_bytes = include_bytes!("shaders/screen_image.frag");
         let vert_bytes = include_bytes!("shaders/screen_image.vert");
 
@@ -49,31 +46,21 @@ impl Render{
             gl::BindTexture(gl::TEXTURE_2D, screen_tex);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as GLint);
-
-            let err = gl::GetError();
-            println!("{}", err);
-
-            //gl::TexStorage2D(gl::TEXTURE_2D, 1, gl::RGB32F, width as GLsizei, height as GLsizei);
-            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB32F as GLint, width as GLsizei, height as GLsizei, 0, gl::RGB, gl::UNSIGNED_BYTE, std::ptr::null());
-
-            let err = gl::GetError();
-            println!("{}", err);            
+            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB32F as GLint, width as GLsizei, height as GLsizei, 0, gl::RGB, gl::UNSIGNED_BYTE, std::ptr::null());      
         }  
         
-        Render { window }
+        Render { }
     }
 
-    pub fn render(&mut self, image : image::RgbImage) -> bool {
-        if self.window.should_close() { return false; }
-
-        self.window.update_events();
+    pub fn render(&mut self, window : &mut Window, image : image::RgbImage) -> bool {
+        if window.should_close() { return false; }
 
         unsafe {
             gl::TexSubImage2D(gl::TEXTURE_2D, 0, 0, 0, image.width() as GLsizei, image.height() as GLsizei, gl::RGB, gl::UNSIGNED_BYTE, image.into_raw().as_ptr() as *const GLvoid);
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
         
-        self.window.swap_buffers();
+        window.swap_buffers();
 
         true
     }
