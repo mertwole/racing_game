@@ -69,4 +69,12 @@ impl Window{
     pub fn should_close(&self) -> bool{
         self.window.should_close()
     }
+
+    pub fn get_time(&self) -> f64 {
+        self.glfw.get_time()
+    }
+
+    pub fn set_time(&mut self, time : f64) {
+        self.glfw.set_time(time);
+    }
 }
