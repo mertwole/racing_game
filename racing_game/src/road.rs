@@ -29,10 +29,12 @@ impl RoadData {
         ];
 
         let heels = vec![
-            Heel { start : 10.0, end : 50.0, start_steepness : 0.004, end_steepness : -0.004 }
+            Heel { start : 0.0, end : 25.0, start_steepness : 0.0, end_steepness : 0.001 },
+            Heel { start : 25.0, end : 75.0, start_steepness : 0.001, end_steepness : -0.001 },
+            Heel { start : 75.0, end : 100.0, start_steepness : -0.001, end_steepness : 0.0 }
         ];
 
-        RoadData { track_length : 100.0, curvatures, heels }
+        RoadData { track_length : 150.0, curvatures, heels }
     }
 
     fn get_norm_segment_offset(&self, prev_segment_offset : f32, curr_segment_start : f32) -> f32 {
@@ -55,7 +57,7 @@ impl RoadData {
 
         for heel in &self.heels {
             if vis_road_dist_norm > heel.start && vis_road_dist_norm < heel.end {
-                let steepness_t = (heel.end - vis_road_dist_norm) / (heel.end - heel.start);
+                let steepness_t = (vis_road_dist_norm - heel.start) / (heel.end - heel.start);
                 return Math::lerp(heel.start_steepness, heel.end_steepness, steepness_t);
             }
         }
@@ -64,36 +66,21 @@ impl RoadData {
     }
 
     fn get_camera_pitch_delta(&self, camera_road_dist : f32) -> f32 {
-
-        let camera_road_dist_norm = camera_road_dist % self.track_length;
-
-        let mut pitch_del = 0.0;
-
-        if camera_road_dist_norm > 9.0 && camera_road_dist_norm < 15.0 {
-            pitch_del = Math::lerp(0.0, -0.1, (camera_road_dist_norm - 9.0) / 6.0);
-        }
-
-        if camera_road_dist_norm > 15.0 && camera_road_dist_norm < 35.0 {
-            pitch_del = Math::lerp(-0.1, 0.1, (camera_road_dist_norm - 15.0) / 20.0);
-        }
-
-        if camera_road_dist_norm > 35.0 && camera_road_dist_norm < 40.0 {
-            pitch_del = Math::lerp(0.1, 0.0, (camera_road_dist_norm - 35.0) / 5.0);
-        }
-
-        pitch_del
+        return self.get_hill_width_multiplier_delta(camera_road_dist + 0.0) * 50.0;
     }
 }
 
 pub struct Road {
     data : RoadData,
     width : f32,
-    lines_density : f32
+    lines_density : f32,
+
+    texture : RgbImage
 }
 
 impl Road {
-    pub fn new() -> Road {
-        Road { data : RoadData::new(), width : 3.5, lines_density : 5.0 }
+    pub fn new(texture : RgbImage) -> Road {
+        Road { data : RoadData::new(), width : 1.0, lines_density : 1.0, texture }
     }
 
     pub fn render(&self, image : &mut RgbImage, camera : &Camera) {
@@ -101,7 +88,7 @@ impl Road {
         let mut prev_segment_offset = 0.0;
         let mut norm_road_offset = 0.0;
 
-        let mut road_lines_accum = camera.road_distance % 2.0 * self.lines_density;
+        let mut road_lines_accum = camera.road_distance % (2.0 * self.lines_density);
         let mut is_horz_line = false;
 
         let mut hill_width_multiplier = 1.0;
@@ -148,14 +135,37 @@ impl Road {
             norm_road_width *= hill_width_multiplier; 
             let norm_left_border = (1.0 - norm_road_width) * 0.5 + norm_road_offset;
             let norm_right_border = norm_left_border + norm_road_width;
-            let left_border = (norm_left_border * (image.width() as f32)) as i32;
-            let right_border = (norm_right_border * (image.width() as f32)) as i32;
 
-            for x in 0..image.width() {   
-                let is_road = (x as i32) > left_border && (x as i32) < right_border;
-                
-                image.put_pixel(x, y, Rgb([if is_road { 255 } else { 100 } , 0, if is_horz_line { 100 } else { 255 }]));
+            let left_border_px = (norm_left_border * (image.width() as f32)) as i32;
+            let right_border_px = (norm_right_border * (image.width() as f32)) as i32;      
+            let road_width_px = (right_border_px - left_border_px + 1) as u32;
+
+            let ground_color = Rgb([0, if is_horz_line {100} else {120}, 0]);
+
+            // Left ground.
+            for x in 0..Math::min(left_border_px, image.width() as i32 - 1) {
+                image.put_pixel(x as u32, y, ground_color);
+            } 
+
+            if road_width_px > 0 && road_width_px < self.texture.width() - 1 {
+                // Road.
+                // Render main texture if there is horz line, secondary texture elsewhere.
+                let mut road_tex_sample_x = if is_horz_line { 0 } else { self.texture.width() - road_width_px };
+                let mut road_tex_sample_y = if is_horz_line { self.texture.height() - road_width_px } else { road_width_px - 1 };
+                road_tex_sample_y = self.texture.height() - road_tex_sample_y - 1;
+
+                for x in left_border_px..right_border_px + 1{
+                    let tex_pixel = self.texture.get_pixel(road_tex_sample_x, road_tex_sample_y);
+                    road_tex_sample_x += 1;
+                    if x < 0 || x >= image.width() as i32{ continue; }
+                    image.put_pixel(x as u32, y, *tex_pixel);
+                }
             }
+
+            // Right ground
+            for x in (right_border_px + 1)..(image.width() as i32) {
+                image.put_pixel(x as u32, y, ground_color);
+            } 
         }
     }
 }

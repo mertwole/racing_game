@@ -24,8 +24,10 @@ fn main() {
     let mut render = Render::new(screen_width, screen_height);
     let mut input = Input::new();
     
-    let mut camera = Camera { screen_dist : 2.0, viewport_height : 1.0, y_pos : 3.0, far_plane : 150.0, pitch : 1.5, road_distance : 0.0 };  
-    let road = Road::new();
+    let mut camera = Camera { screen_dist : 1.0, viewport_height : 1.0, y_pos : 1.0, far_plane : 150.0, pitch : 1.5, road_distance : 0.0 };  
+    
+    let road_tex = image::open("resources/road_tex.png").unwrap().to_rgb();
+    let road = Road::new(road_tex);
         
     let car_image = image::open("resources/ferrari.png").unwrap().to_rgba();
     let mut car = Car::new(car_image);
