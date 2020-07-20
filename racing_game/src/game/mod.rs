@@ -29,7 +29,10 @@ pub struct Game {
     camera : Camera,
 
     road : Road,
-    car : Car
+    car : Car,
+
+
+    billboard_dbg : Billboard
 }
 
 impl Game {
@@ -51,11 +54,9 @@ impl Game {
 
         let spritesheet = image::open("resources/test_spritesheet.png").unwrap().to_rgba();
         let meta_file = File::open("resources/test_spritesheet.meta").unwrap();
-        println!("ima here");
         let billboard = Billboard::new(spritesheet, meta_file);
-        println!("and here");
 
-        Game { window, render, input, camera, road, car, screen_width, screen_height }
+        Game { window, render, input, camera, road, car, screen_width, screen_height, billboard_dbg : billboard }
     }
 
     pub fn enter_gameloop(&mut self) {
@@ -90,8 +91,10 @@ impl Game {
     fn render(&mut self, mut buffer : RgbImage) {
         self.road.render_from_y_data(&mut buffer, &self.camera);
 
-        self.car.render(&mut buffer);
+        //self.car.render(&mut buffer);
         
+        self.billboard_dbg.render(640, 400, 1.0, &mut buffer);
+
         self.render.render(&mut self.window, buffer);
     }
 }
