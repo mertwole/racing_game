@@ -1,7 +1,5 @@
 use crate::image::{RgbImage};
 
-use std::fs::File;
-
 mod camera;
 mod car;
 mod math;
@@ -30,9 +28,7 @@ pub struct Game {
 
     road : Road,
     car : Car,
-
-
-    billboard_dbg : Billboard
+    billboards : Billboards
 }
 
 impl Game {
@@ -52,11 +48,9 @@ impl Game {
         let car_image = image::open("resources/ferrari.png").unwrap().to_rgba();
         let car = Car::new(car_image, 5.0, 5.0, 10.0);
 
-        let spritesheet = image::open("resources/test_spritesheet.png").unwrap().to_rgba();
-        let meta_file = File::open("resources/test_spritesheet.meta").unwrap();
-        let billboard = Billboard::new(spritesheet, meta_file);
+        let billboards = Billboards::new();
 
-        Game { window, render, input, camera, road, car, screen_width, screen_height, billboard_dbg : billboard }
+        Game { window, render, input, camera, road, car, screen_width, screen_height, billboards }
     }
 
     pub fn enter_gameloop(&mut self) {
@@ -91,9 +85,9 @@ impl Game {
     fn render(&mut self, mut buffer : RgbImage) {
         self.road.render_from_y_data(&mut buffer, &self.camera);
 
-        //self.car.render(&mut buffer);
-        
-        self.billboard_dbg.render(640, 400, 1.0, &mut buffer);
+        self.car.render(&mut buffer);
+
+        self.billboards.render(&self.camera, &self.road.y_data, &mut buffer);
 
         self.render.render(&mut self.window, buffer);
     }
