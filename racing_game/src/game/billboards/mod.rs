@@ -3,7 +3,7 @@ use super::road::RoadYData;
 
 mod billboard;
 
-use billboard::*;
+pub use billboard::*;
 
 struct Billboards {
 

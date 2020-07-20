@@ -1,5 +1,7 @@
 use crate::image::{RgbImage};
 
+use std::fs::File;
+
 mod camera;
 mod car;
 mod math;
@@ -47,6 +49,12 @@ impl Game {
         let car_image = image::open("resources/ferrari.png").unwrap().to_rgba();
         let car = Car::new(car_image, 5.0, 5.0, 10.0);
 
+        let spritesheet = image::open("resources/test_spritesheet.png").unwrap().to_rgba();
+        let meta_file = File::open("resources/test_spritesheet.meta").unwrap();
+        println!("ima here");
+        let billboard = Billboard::new(spritesheet, meta_file);
+        println!("and here");
+
         Game { window, render, input, camera, road, car, screen_width, screen_height }
     }
 
@@ -54,7 +62,7 @@ impl Game {
         loop {
             let delta_time = self.window.get_time();
             self.window.set_time(0.0);
-
+            
             println!("FPS : {}", 1.0 / delta_time);
 
             self.update(delta_time as f32);
