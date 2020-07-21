@@ -5,6 +5,7 @@ mod car;
 mod math;
 mod road;
 mod billboards;
+mod horizon;
 
 use crate::render::*;
 use crate::window::*;
@@ -14,6 +15,7 @@ use road::*;
 use camera::*;
 use car::*;
 use billboards::*;
+use horizon::*;
 
 pub struct Game {
     screen_width : u32,
@@ -28,7 +30,9 @@ pub struct Game {
 
     road : Road,
     car : Car,
-    billboards : Billboards
+    billboards : Billboards,
+
+    horizon : Horizon
 }
 
 impl Game {
@@ -50,7 +54,10 @@ impl Game {
 
         let billboards = Billboards::new();
 
-        Game { window, render, input, camera, road, car, screen_width, screen_height, billboards }
+        let horizon_image = image::open("resources/horizon.png").unwrap().to_rgba();
+        let horizon = Horizon::new(horizon_image);
+
+        Game { window, render, input, camera, road, car, screen_width, screen_height, billboards, horizon }
     }
 
     pub fn enter_gameloop(&mut self) {
@@ -83,6 +90,8 @@ impl Game {
     }
 
     fn render(&mut self, mut buffer : RgbImage) {
+        self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
+
         self.road.render_from_y_data(&mut buffer, &self.camera);
 
         self.car.render(&mut buffer);
