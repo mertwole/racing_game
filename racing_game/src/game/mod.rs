@@ -1,3 +1,5 @@
+use std::fs::File;
+
 use crate::image::{RgbImage};
 
 mod camera;
@@ -52,7 +54,19 @@ impl Game {
         let car_image = image::open("resources/ferrari.png").unwrap().to_rgba();
         let car = Car::new(car_image, 5.0, 5.0, 10.0);
 
-        let billboards = Billboards::new();
+
+        let spritesheet = image::open("resources/test_spritesheet.png").unwrap().to_rgba();
+        let meta_file = File::open("resources/test_spritesheet.meta").unwrap(); 
+        let mut billboards = Billboards::new();
+        let car_billboard_factory = BillboardFactory::new(&spritesheet, &meta_file);
+
+        billboards.add_dynamic(car_billboard_factory.construct(10.0, 0.5));
+        billboards.add_static(car_billboard_factory.construct(13.0, -0.5));
+        billboards.add_dynamic(car_billboard_factory.construct(12.0, 0.7));
+        //billboards.add_static(car_billboard_factory.construct(15.0, -0.5));
+        billboards.add_dynamic(car_billboard_factory.construct(14.0, 0.9));
+        //billboards.add_static(car_billboard_factory.construct(11.0, -0.5));
+        billboards.add_dynamic(car_billboard_factory.construct(16.0, 0.5));
 
         let horizon_image = image::open("resources/horizon.png").unwrap().to_rgba();
         let horizon = Horizon::new(horizon_image);
@@ -86,6 +100,8 @@ impl Game {
             self.car.brake(delta_time);
         }
 
+        self.billboards.get_dynamic_mut(BillboardId(0)).road_distance += delta_time * 0.3;
+
         self.camera.road_distance += self.car.get_speed() * delta_time;
     }
 
@@ -96,7 +112,7 @@ impl Game {
 
         self.car.render(&mut buffer);
 
-        self.billboards.render(&self.camera, &self.road.y_data, &mut buffer, 150.0);
+        self.billboards.render_all(&self.camera, &self.road.y_data, &mut buffer, 150.0);
 
         self.render.render(&mut self.window, buffer);
     }
