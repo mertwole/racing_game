@@ -2,22 +2,7 @@ use std::fs::File;
 
 use crate::image::{RgbImage};
 
-mod camera;
-mod car;
-mod math;
-mod road;
-mod billboards;
-mod horizon;
-
-use crate::render::*;
-use crate::window::*;
-use crate::input::*;
-
-use road::*;
-use camera::*;
-use car::*;
-use billboards::*;
-use horizon::*;
+use crate::engine::*;
 
 pub struct Game {
     screen_width : u32,
@@ -25,15 +10,12 @@ pub struct Game {
 
     window : Window,
     render : Render,
-
     input : Input,
 
     camera : Camera,
-
     road : Road,
     car : Car,
     billboards : Billboards,
-
     horizon : Horizon
 }
 
@@ -53,7 +35,6 @@ impl Game {
             
         let car_image = image::open("resources/ferrari.png").unwrap().to_rgba();
         let car = Car::new(car_image, 5.0, 5.0, 10.0);
-
 
         let spritesheet = image::open("resources/test_spritesheet.png").unwrap().to_rgba();
         let meta_file = File::open("resources/test_spritesheet.meta").unwrap(); 

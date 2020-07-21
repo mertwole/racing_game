@@ -1,7 +1,7 @@
 use glfw::{Context, Key, Action};
 use std::sync::mpsc::Receiver;
 
-use crate::input::{InputKey, KeyState};
+use crate::engine::input::{InputKey, KeyState};
 
 pub struct WindowParameters {
     pub width : u32,

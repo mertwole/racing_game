@@ -3,7 +3,7 @@ use gl::types::*;
 mod shader_program;
 use shader_program::*;
 
-use crate::window::*;
+use crate::engine::window::*;
 
 pub struct Render{
 

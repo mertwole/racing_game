@@ -1,8 +1,6 @@
 extern crate image;
 
-mod render;
-mod window;
-mod input;
+mod engine;
 mod game;
 
 use game::*;
