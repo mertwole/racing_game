@@ -87,7 +87,7 @@ impl Game {
 
         self.car.render(&mut buffer);
 
-        self.billboards.render(&self.camera, &self.road.y_data, &mut buffer);
+        self.billboards.render(&self.camera, &self.road.y_data, &mut buffer, 150.0);
 
         self.render.render(&mut self.window, buffer);
     }
