@@ -29,7 +29,7 @@ impl Road {
         Road { 
             data : RoadData::new(), 
             width : 1.0, 
-            lines_density : 1.0, 
+            lines_density : 0.5, 
             texture, 
             ground_color_main : Rgb([0, 100, 0]), 
             ground_color_secondary : Rgb([0, 120, 0]),

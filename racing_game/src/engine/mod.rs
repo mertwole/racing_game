@@ -1,6 +1,6 @@
 mod camera;
 mod car;
-mod math;
+pub mod math;
 mod road;
 mod billboards;
 mod horizon;

@@ -1,8 +1,15 @@
 use std::fs::File;
 
+extern crate rand;
+
+use rand::*;
 use crate::image::{RgbImage};
 
 use crate::engine::*;
+use crate::engine::math::IVec2;
+
+mod city_map;
+use city_map::*;
 
 pub struct Game {
     screen_width : u32,
@@ -16,7 +23,9 @@ pub struct Game {
     road : Road,
     car : Car,
     billboards : Billboards,
-    horizon : Horizon
+    horizon : Horizon,
+
+    city_map : CityMap
 }
 
 impl Game {
@@ -52,7 +61,15 @@ impl Game {
         let horizon_image = image::open("resources/horizon.png").unwrap().to_rgba();
         let horizon = Horizon::new(horizon_image);
 
-        Game { window, render, input, camera, road, car, screen_width, screen_height, billboards, horizon }
+        let mut generation_rng = rand::rngs::StdRng::from_seed([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]);
+        let parameters = city_map::GenerationParameters { 
+            city_count : 9, 
+            grid_size : IVec2::new(20, 20),
+            min_distance_between_cities : 2.0 
+        };
+        let city_map = CityMap::generate(&mut generation_rng, parameters);
+
+        Game { window, render, input, camera, road, car, screen_width, screen_height, billboards, horizon, city_map }
     }
 
     pub fn enter_gameloop(&mut self) {
@@ -60,7 +77,7 @@ impl Game {
             let delta_time = self.window.get_time();
             self.window.set_time(0.0);
             
-            println!("FPS : {}", 1.0 / delta_time);
+            //println!("FPS : {}", 1.0 / delta_time);
 
             self.update(delta_time as f32);
 
