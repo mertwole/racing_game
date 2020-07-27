@@ -70,13 +70,6 @@ impl LineSegment{
         (&self.end - &self.start).sqr_len()
     }
 
-    pub fn scale(&mut self, scale : f32) {
-        let midpoint = &(&self.start + &self.end) * 0.5;
-        let half_new = &(&self.end - &midpoint) * scale;
-        self.start = &midpoint - &half_new;
-        self.end = &midpoint + &half_new;
-    }
-
     fn get_line(&self) -> Line {
         Line { pass_through : self.start.clone(), direction : &self.end - &self.start }
     }
