@@ -19,9 +19,9 @@ impl UIPage {
     }
 
     pub fn add_control(&mut self, mut control : Box<dyn UIControl>, pivot : Pivot, position : IVec2) {
-        let cintrol_size = control.get_size();
+        let control_size = control.get_size();
         let position = match pivot {
-            Pivot::Center => { &position - &(&cintrol_size / 2) },
+            Pivot::Center => { &position - &(&control_size / 2) },
             Pivot::LeftBottom => { position }
         };
 

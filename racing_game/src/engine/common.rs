@@ -15,12 +15,57 @@ impl ImageOps {
             }
         }
     }
+
+    // Draw only lines that are fully inside the buffer.
+    pub fn draw_line_one_pixel(buffer : &mut RgbImage, start : &IVec2, end : &IVec2, color : &Rgb::<u8>) {
+        if start.x < 0 || start.x >= buffer.width() as isize { return; }
+        if start.y < 0 || start.y >= buffer.height() as isize { return; }
+        if end.x < 0 || end.x >= buffer.width() as isize { return; }
+        if end.y < 0 || end.y >= buffer.height() as isize { return; }
+
+        for pixel_pos in Geometry::one_pixel_line_pixels(start, end) {
+            buffer.put_pixel(pixel_pos.x as u32, pixel_pos.y as u32, *color);
+        }
+    }
+
+    // Draw only lines that are fully inside the buffer.
+    pub fn draw_line(buffer : &mut RgbImage, start : &IVec2, end : &IVec2, color : &Rgb::<u8>, width : u32 ) {
+        let direction = &(end - start).vec2().normalized() * width as f32;
+        let orth_direction = IVec2::new(-direction.y as isize, direction.x as isize);
+        let mut orth_direction_points : Vec<IVec2> = Geometry::one_pixel_line_pixels(&IVec2::zero(), &(&IVec2::zero() - &orth_direction));
+        orth_direction_points.append(&mut Geometry::one_pixel_line_pixels(&IVec2::zero(), &orth_direction));
+
+        for point_pos in Geometry::one_pixel_line_pixels(start, end) {
+            for orth_dir_point in &orth_direction_points {
+                let global_point_pos = &point_pos + orth_dir_point;
+                buffer.put_pixel(global_point_pos.x as u32, global_point_pos.y as u32, *color);
+            }
+        }
+    } 
+
+    fn draw_rect_outline_one_pixel(buffer : &mut RgbImage, min : &IVec2, max : &IVec2, color : &Rgb::<u8>) {   
+        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(min.x, max.y), &IVec2::new(max.x, max.y), color); // Top.    
+        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(max.x, max.y), &IVec2::new(max.x, min.y), color); // Right.     
+        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(max.x, min.y), &IVec2::new(min.x, min.y), color); // Bottom.
+        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(min.x, min.y), &IVec2::new(min.x, max.y), color); // Left.
+    }
+
+    pub fn draw_rect_outline(buffer : &mut RgbImage, min : &IVec2, max : &IVec2, color : &Rgb::<u8>, width : u32 ) {
+        for i in 0..width as isize {
+            let border_offset = IVec2::new(i, i);
+            ImageOps::draw_rect_outline_one_pixel(buffer, &(min - &border_offset), &(max + &border_offset), color);
+        }
+    }
 }
 
 impl Math {
     pub fn lerp(a : f32, b : f32, t : f32) -> f32 {
         a + (b - a) * t
     }
+
+    pub fn sgn_isize(a : isize) -> isize {
+        if a < 0 { -1 } else if a == 0 { 0 } else { 1 }
+    } 
 
     pub fn min<T>(a : T, b : T) -> T where T : std::cmp::PartialOrd {
         match a.partial_cmp(&b) {
@@ -65,6 +110,38 @@ impl Geometry {
 
         let intersection_x = (t2 - t1) / (k1 - k2);
         Vec2::new(intersection_x, k1 * intersection_x + t1)
+    }
+
+    pub fn triangle_area_ivec2(vert_0 : &IVec2, vert_1 : &IVec2, vert_2 : &IVec2) -> isize {
+        // Gauss's area formula.
+        // Area = x0 * y1 + x1 * y2 + x2 * y0 - x1 * y0 - x2 * y1 - x0 * y2.
+        // Area = x0 * (y1 - y2) + x1 * (y2 - y0) + x2 * (y0 - y1).
+        vert_0.x * (vert_1.y - vert_2.y) + vert_1.x * (vert_2.y - vert_0.y) + vert_2.x * (vert_0.y - vert_1.y)
+    }
+
+    pub fn one_pixel_line_pixels(start : &IVec2, end : &IVec2) -> Vec<IVec2> {
+        let delta = end - start;
+        let sector = IVec2::new(Math::sgn_isize(delta.x), Math::sgn_isize(delta.y));
+
+        if sector.x == 0 { 
+            return (Math::min(start.y, end.y + 1)..Math::max(start.y, end.y + 1)).map(|y| IVec2::new(start.x, y)).collect();
+        }
+
+        if sector.y == 0 { 
+            return (Math::min(start.x, end.x + 1)..Math::max(start.x, end.x + 1)).map(|x| IVec2::new(x, start.y)).collect();
+        }
+
+        let mut points : Vec<IVec2> = Vec::with_capacity((delta.x.abs() + delta.y.abs()) as usize);
+        let mut next_point = start.clone();
+        loop {
+            points.push(next_point.clone());
+            // Select 3 possible points, compare distances and select the closest to line. 
+            // As start and end points are constant for all points compare only triangle areas.
+            let possible_points = vec![&next_point + &IVec2::new(0, sector.y), &next_point + &IVec2::new(sector.x, 0), &next_point + &sector];
+            next_point = possible_points.into_iter().min_by_key(|point| Geometry::triangle_area_ivec2(&point, end, start).abs()).unwrap();
+
+            if next_point.x == end.x && next_point.y == end.y { return points; }
+        }
     }
 }
 
@@ -132,6 +209,19 @@ impl Vec2{
 
     pub fn sqr_len(&self) -> f32{
         self.dot(&self)
+    }
+
+    pub fn len(&self) -> f32 {
+        self.sqr_len().sqrt()
+    } 
+
+    pub fn normalized(&self) -> Vec2 {
+        let len = self.len();
+        Vec2 { x : self.x / len, y : self.y / len }
+    }
+
+    pub fn ivec2(&self) -> IVec2 {
+        IVec2 { x : self.x as isize, y : self.y as isize }
     }
 }
 

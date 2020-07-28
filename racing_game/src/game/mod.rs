@@ -4,7 +4,7 @@ use std::rc::Rc;
 extern crate rand;
 
 use rand::*;
-use crate::image::RgbImage;
+use crate::image::{Rgb, RgbImage};
 
 use crate::engine::billboards::*;
 use crate::engine::camera::*;
@@ -16,7 +16,7 @@ use crate::engine::road::*;
 use crate::engine::ui::*;
 use crate::engine::ui::font::*;
 use crate::engine::window::*;
-use crate::engine::common::{IVec2};
+use crate::engine::common::{IVec2, ImageOps};
 
 mod city_map;
 use city_map::*;
@@ -131,16 +131,24 @@ impl Game {
     }
 
     fn render(&mut self, mut buffer : RgbImage) {
-        self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
+        /*self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
 
         self.road.render_from_y_data(&mut buffer, &self.camera);
 
         self.car.render(&mut buffer);
 
         self.billboards.render_all(&self.camera, &self.road.y_data, &mut buffer, 150.0);
-
+*/
         // Test UI.
         self.test_ui.draw(&mut buffer);
+
+        ImageOps::draw_rect_outline(&mut buffer, &IVec2::new(10, 10), &IVec2::new(120, 120), &Rgb([100, 255, 0]), 5);
+
+        ImageOps::draw_line_one_pixel(&mut buffer, &IVec2::new(200, 200), &IVec2::new(220, 220), &Rgb([100, 255, 0]));
+        ImageOps::draw_line_one_pixel(&mut buffer, &IVec2::new(200, 200), &IVec2::new(220, 100), &Rgb([100, 255, 0]));
+        ImageOps::draw_line_one_pixel(&mut buffer, &IVec2::new(200, 200), &IVec2::new(220, 160), &Rgb([100, 255, 0]));
+        ImageOps::draw_line(&mut buffer, &IVec2::new(200, 200), &IVec2::new(180, 280), &Rgb([100, 255, 0]), 4);
+        ImageOps::draw_line(&mut buffer, &IVec2::new(200, 200), &IVec2::new(100, 180), &Rgb([100, 255, 0]), 5);
 
         self.render.render(&mut self.window, buffer);
     }
