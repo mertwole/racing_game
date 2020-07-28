@@ -25,7 +25,7 @@ impl Font {
 
             for x in 0..symbol_size.x as u32 {
                 for y in 0..symbol_size.y as u32 {
-                    let pixel = texture.get_pixel(x + read_x, symbol_size.y as u32 - y - 1 + read_y);
+                    let pixel = texture.get_pixel(x + read_x, y + read_y);
                     symbol_buffer.put_pixel(x, y, *pixel);
                 }
             }

@@ -1,6 +1,6 @@
 mod camera;
 mod car;
-pub mod math;
+mod common;
 mod road;
 mod billboards;
 mod horizon;
@@ -10,6 +10,8 @@ mod window;
 mod input;
 
 mod ui;
+
+pub use common::*;
 
 pub use road::*;
 pub use camera::*;

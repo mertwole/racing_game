@@ -1,4 +1,6 @@
 use crate::image::{RgbaImage, RgbImage, Rgb};
+use crate::engine::ImageOps;
+use crate::engine::math::IVec2;
 
 pub struct Car {
     acceleration : f32,
@@ -31,13 +33,6 @@ impl Car {
         let render_x = image.width() / 2 - self.image.width() / 2;
         let render_y = 0;
 
-        for x in 0..self.image.width() {
-            for y in 0..self.image.height() {
-                let car_pixel = self.image.get_pixel(x, self.image.height() - y - 1);
-                if car_pixel[3] != 0{
-                    image.put_pixel(render_x + x, render_y + y, Rgb([car_pixel[0], car_pixel[1], car_pixel[2]]))
-                }
-            }
-        }
+        ImageOps::overlay_rgba(image, &self.image, &IVec2::new(render_x as isize, render_y));
     }
 }

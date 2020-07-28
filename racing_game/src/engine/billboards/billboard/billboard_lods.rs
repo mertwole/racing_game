@@ -7,6 +7,7 @@ use std::io::BufReader;
 use image::*;
 
 use crate::engine::math::*;
+use crate::engine::ImageOps;
 
 struct SpriteDescr {
     pos_x : u32,
@@ -77,12 +78,8 @@ impl BillboardLods{
         let lod = &self.lods[self.get_lod_id(scale) as usize];
 
         let left_bottom_x = pos_x - lod.image.width() as i32 / 2;
-        for x in Math::max(0, -left_bottom_x)..Math::min(lod.image.width() as i32, buffer.width() as i32 - left_bottom_x) {
-            for y in Math::max(0, -pos_y)..Math::min(lod.image.height() as i32, buffer.height() as i32 - pos_y) {
-                let pixel = lod.image.get_pixel(x as u32, (lod.image.height() as i32 - y - 1) as u32);
-                if pixel[3] == 0 { continue; }
-                buffer.put_pixel((x + left_bottom_x) as u32, (y + pos_y) as u32, Rgb([pixel[0], pixel[1], pixel[2]]))
-            }
-        }
+        let position = IVec2::new(left_bottom_x as isize, pos_y as isize);
+        
+        ImageOps::overlay_rgba(buffer, &lod.image, &position);
     }
 }

@@ -4,11 +4,10 @@ use std::rc::Rc;
 extern crate rand;
 
 use rand::*;
-use crate::image::{RgbImage, RgbaImage, Rgb};
+use crate::image::RgbImage;
 
 use crate::engine::*;
 use crate::engine::math::IVec2;
-use crate::engine::ui_controls::*;
 
 mod city_map;
 use city_map::*;
@@ -77,16 +76,16 @@ impl Game {
         let font_tex = image::open("resources/font.png").unwrap().to_rgba();
         let font = Font::new(font_tex, IVec2::new(12, 12), String::from("ABCDEFGHIJ"));
         let font = Rc::from(font);
-        let mut test_ui = UIPage::new(IVec2::new(screen_width as isize, screen_height as isize), font.clone());
+        let mut test_ui = UIPage::new(IVec2::new(screen_width as isize, screen_height as isize));
 
         let test_image = image::open("resources/ferrari.png").unwrap().to_rgba();
         let test_image = Rc::from(test_image);
 
-        let text = UIText::new(font.clone(), String::from("ABC"), IVec2::new(100, 100), Pivot::Center);
-        let image = UIImage::new(test_image.clone(), IVec2::new(0, 0), Pivot::Center);
+        let text = UIText::new(font.clone(), String::from("ABC"));
+        let image = UIImage::new(test_image.clone());
 
-        test_ui.add_control(Box::from(text));
-        test_ui.add_control(Box::from(image));
+        test_ui.add_control(Box::from(text), Pivot::Center, IVec2::new(100, 100));
+        test_ui.add_control(Box::from(image), Pivot::Center, IVec2::new(0, 0));
 
         Game { window, render, input, camera, road, car, screen_width, screen_height, billboards, horizon, city_map, test_ui }
     }
@@ -123,13 +122,13 @@ impl Game {
     }
 
     fn render(&mut self, mut buffer : RgbImage) {
-        /*self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
+        self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
 
         self.road.render_from_y_data(&mut buffer, &self.camera);
 
         self.car.render(&mut buffer);
 
-        self.billboards.render_all(&self.camera, &self.road.y_data, &mut buffer, 150.0);*/
+        self.billboards.render_all(&self.camera, &self.road.y_data, &mut buffer, 150.0);
 
         // Test UI.
         self.test_ui.draw(&mut buffer);
