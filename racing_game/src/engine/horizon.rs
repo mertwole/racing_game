@@ -1,6 +1,6 @@
 use image::{RgbaImage, RgbImage, Rgb};
 
-use super::math::*;
+use super::common::Math;
 
 pub struct Horizon {
     image : RgbaImage

@@ -1,6 +1,5 @@
-use crate::image::{RgbaImage, RgbImage, Rgb};
-use crate::engine::ImageOps;
-use crate::engine::math::IVec2;
+use crate::image::{RgbaImage, RgbImage};
+use crate::engine::common::{IVec2, ImageOps};
 
 pub struct Car {
     acceleration : f32,

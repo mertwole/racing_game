@@ -6,8 +6,7 @@ use std::io::BufReader;
 
 use image::*;
 
-use crate::engine::math::*;
-use crate::engine::ImageOps;
+use crate::engine::common::{IVec2, ImageOps};
 
 struct SpriteDescr {
     pos_x : u32,

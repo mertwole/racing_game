@@ -1,6 +1,6 @@
 use crate::image::{RgbImage, Rgb};
 use super::camera::Camera;
-use super::math::*;
+use super::common::Math;
 
 mod road_data;
 use road_data::*;

@@ -1,6 +1,6 @@
 use rand::{RngCore, rngs::StdRng};
 
-use crate::engine::math::{IVec2, LineSegment, Geometry};
+use crate::engine::common::{IVec2, LineSegment, Geometry};
 
 mod city;
 mod road;

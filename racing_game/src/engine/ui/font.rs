@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use image::RgbaImage;
 
-use crate::engine::math::IVec2;
+use crate::engine::common::IVec2;
 
 pub struct Font {
     symbols : HashMap<char, RgbaImage>

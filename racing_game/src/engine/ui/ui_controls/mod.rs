@@ -1,6 +1,6 @@
 use image::*;
 
-use crate::engine::math::*;
+use crate::engine::common::IVec2;
 
 mod ui_text;
 mod ui_image;

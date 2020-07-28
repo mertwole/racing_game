@@ -1,9 +1,8 @@
 use std::rc::Rc;
 
-use image::{RgbImage, RgbaImage, Rgb};
+use image::{RgbImage, RgbaImage};
 
-use crate::engine::math::{IVec2, Math};
-use crate::engine::ImageOps;
+use crate::engine::common::{IVec2, ImageOps};
 use super::UIControl;
 
 pub struct UIImage {

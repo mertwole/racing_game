@@ -2,9 +2,8 @@ use std::rc::Rc;
 
 use image::RgbImage;
 
-use crate::engine::math::IVec2;
-use crate::engine::ImageOps;
-use super::{UIControl, super::Font};
+use crate::engine::common::{IVec2, ImageOps};
+use super::{UIControl, super::font::Font};
 
 pub struct UIText {
     font : Rc<Font>,

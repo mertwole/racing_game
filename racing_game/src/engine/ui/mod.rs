@@ -1,13 +1,12 @@
 use image::RgbImage;
 
-use super::math::IVec2;
+use super::common::IVec2;
 
 mod ui_controls;
 pub use ui_controls::{UIImage, UIText, Pivot};
 use ui_controls::UIControl;
 
-mod font;
-pub use font::Font;
+pub mod font;
 
 pub struct UIPage{
     controls : Vec<Box<dyn UIControl>>,
