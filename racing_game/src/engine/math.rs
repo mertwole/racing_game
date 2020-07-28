@@ -193,4 +193,11 @@ impl ops::Sub<&IVec2> for &IVec2 {
     }
 }
 
+impl ops::Div<isize> for &IVec2 {
+    type Output = IVec2;
+    fn div(self, rhs: isize) -> IVec2 {
+        IVec2::new(self.x / rhs, self.y / rhs)
+    }
+}
+
 // endregion

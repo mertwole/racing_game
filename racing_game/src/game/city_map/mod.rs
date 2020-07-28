@@ -135,6 +135,7 @@ impl CityMap {
         let removable_road_count = roads.len() / 2;
         let unremovable_road_count = roads.len() - removable_road_count;
         let remove_count = roads.len() / 3;
+        
         let mut removed = 0;
         for _i in 0..remove_count {
             let remove_id = unremovable_road_count + rng.next_u32() as usize % (removable_road_count - removed);

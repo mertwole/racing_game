@@ -9,6 +9,7 @@ mod render;
 mod window;
 mod input;
 
+mod ui;
 
 pub use road::*;
 pub use camera::*;
@@ -19,3 +20,5 @@ pub use horizon::*;
 pub use render::*;
 pub use window::*;
 pub use input::*;
+
+pub use ui::*;

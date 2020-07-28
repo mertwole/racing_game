@@ -1,12 +1,14 @@
 use std::fs::File;
+use std::rc::Rc;
 
 extern crate rand;
 
 use rand::*;
-use crate::image::{RgbImage};
+use crate::image::{RgbImage, RgbaImage, Rgb};
 
 use crate::engine::*;
 use crate::engine::math::IVec2;
+use crate::engine::ui_controls::*;
 
 mod city_map;
 use city_map::*;
@@ -25,7 +27,9 @@ pub struct Game {
     billboards : Billboards,
     horizon : Horizon,
 
-    city_map : CityMap
+    city_map : CityMap,
+
+    test_ui : UIPage
 }
 
 impl Game {
@@ -69,7 +73,22 @@ impl Game {
         };
         let city_map = CityMap::generate(&mut generation_rng, parameters);
 
-        Game { window, render, input, camera, road, car, screen_width, screen_height, billboards, horizon, city_map }
+        // Test UI
+        let font_tex = image::open("resources/font.png").unwrap().to_rgba();
+        let font = Font::new(font_tex, IVec2::new(12, 12), String::from("ABCDEFGHIJ"));
+        let font = Rc::from(font);
+        let mut test_ui = UIPage::new(IVec2::new(screen_width as isize, screen_height as isize), font.clone());
+
+        let test_image = image::open("resources/ferrari.png").unwrap().to_rgba();
+        let test_image = Rc::from(test_image);
+
+        let text = UIText::new(font.clone(), String::from("ABC"), IVec2::new(100, 100), Pivot::Center);
+        let image = UIImage::new(test_image.clone(), IVec2::new(0, 0), Pivot::Center);
+
+        test_ui.add_control(Box::from(text));
+        test_ui.add_control(Box::from(image));
+
+        Game { window, render, input, camera, road, car, screen_width, screen_height, billboards, horizon, city_map, test_ui }
     }
 
     pub fn enter_gameloop(&mut self) {
@@ -104,13 +123,16 @@ impl Game {
     }
 
     fn render(&mut self, mut buffer : RgbImage) {
-        self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
+        /*self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
 
         self.road.render_from_y_data(&mut buffer, &self.camera);
 
         self.car.render(&mut buffer);
 
-        self.billboards.render_all(&self.camera, &self.road.y_data, &mut buffer, 150.0);
+        self.billboards.render_all(&self.camera, &self.road.y_data, &mut buffer, 150.0);*/
+
+        // Test UI.
+        self.test_ui.draw(&mut buffer);
 
         self.render.render(&mut self.window, buffer);
     }
