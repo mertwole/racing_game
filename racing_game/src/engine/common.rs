@@ -5,6 +5,20 @@ pub struct ImageOps { }
 pub struct Math{ }
 pub struct Geometry { }
 
+struct FloodFillRange {
+    x_left : isize,
+    x_right : isize,
+    y : isize
+}
+
+impl FloodFillRange {
+    fn fill(&self, buffer : &mut RgbImage, color : &Rgb<u8>) {
+        for x in self.x_left..self.x_right + 1{
+            buffer.put_pixel(x as u32, self.y as u32, *color);
+        }
+    }
+}
+
 impl ImageOps {
     pub fn overlay_rgba(bottom : &mut RgbImage, top : &RgbaImage, position : &IVec2) {
         for x in Math::max(0, -position.x)..Math::min(top.width() as isize, bottom.width() as isize - position.x) {
@@ -28,19 +42,140 @@ impl ImageOps {
         }
     }
 
+    // region floodfill
+    fn floodfill(buffer : &mut RgbImage, point : &IVec2, color : &Rgb<u8>) {
+        let mut starting_range = FloodFillRange {x_left : point.x, x_right : point.x, y : point.y };
+        // Find left FloodFillRange's border.
+        loop {
+            if buffer.get_pixel(starting_range.x_left as u32 - 1, starting_range.y as u32) == color { break; }
+            starting_range.x_left -= 1;
+        }
+        // Find right FloodFillRange's border.
+        loop {
+            if buffer.get_pixel(starting_range.x_right as u32 + 1, starting_range.y as u32) == color { break; }
+            starting_range.x_right += 1;
+        }
+
+        starting_range.fill(buffer, color);
+        ImageOps::floodfill_step(buffer, &starting_range, color);
+    }
+
+    fn floodfill_step(buffer : &mut RgbImage, current_fill : &FloodFillRange, color : &Rgb<u8>) {        
+        ImageOps::floodfill_line(buffer, &current_fill, color, current_fill.y + 1); 
+        ImageOps::floodfill_line(buffer, &current_fill, color, current_fill.y - 1);
+    }
+
+    fn floodfill_line(buffer : &mut RgbImage, current_fill : &FloodFillRange, color : &Rgb<u8>, y : isize) {
+        let mut range_filling = false;
+        let mut new_range = FloodFillRange { x_left : 0, x_right : 0, y : y };
+
+        let mut x_left = current_fill.x_left;
+        while buffer.get_pixel(x_left as u32, y as u32) != color { x_left -= 1; }
+        let mut x_right = current_fill.x_right;
+        while buffer.get_pixel(x_right as u32, y as u32) != color { x_right += 1; }
+
+        for x in x_left..x_right + 1 {
+            if !range_filling && buffer.get_pixel(x as u32, y as u32) != color {
+                new_range.x_left = x;
+                range_filling = true;
+            } else if range_filling && buffer.get_pixel(x as u32, y as u32) == color {
+                new_range.x_right = x - 1;
+                new_range.fill(buffer, color);
+                ImageOps::floodfill_step(buffer, &new_range, color);
+                range_filling = false;
+            }
+        }
+
+        if range_filling {
+            new_range.x_right = x_right;
+            new_range.fill(buffer, color);
+            ImageOps::floodfill_step(buffer, &new_range, color);
+        }
+    }
+    // endregion
+
+    // region draw triangle
+    fn draw_triangle_universal(buffer : &mut RgbImage, verts : &[IVec2; 3], color : &Rgb::<u8>, draw_half : fn(&mut RgbImage, &Line, &Line, isize, &Rgb<u8>) -> ()) {
+        let mut sorted_verts = [IVec2::zero(); 3];
+        sorted_verts.clone_from_slice(verts);
+        sorted_verts.sort_by(|a, b| a.y.cmp(&b.y));
+
+        // Draw top half.
+        let left_triangle_side = Line::new(sorted_verts[0].vec2(), (&sorted_verts[1] - &sorted_verts[0]).vec2());
+        let right_triangle_side = Line::new(sorted_verts[0].vec2(), (&sorted_verts[2] - &sorted_verts[0]).vec2());
+        for y in sorted_verts[0].y..sorted_verts[1].y { draw_half(buffer, &left_triangle_side, &right_triangle_side, y, color); }
+        // Draw bottom half.
+        let left_triangle_side = Line::new(sorted_verts[2].vec2(), (&sorted_verts[0] - &sorted_verts[2]).vec2());
+        let right_triangle_side = Line::new(sorted_verts[2].vec2(), (&sorted_verts[1] - &sorted_verts[2]).vec2());
+        for y in sorted_verts[1].y..sorted_verts[2].y { draw_half(buffer, &left_triangle_side, &right_triangle_side, y, color); }
+    }
+
+    fn draw_triangle_half(buffer : &mut RgbImage, left_side : &Line, right_side : &Line, y : isize, color : &Rgb<u8>) {
+        let horz_line = Line::new(Vec2::new(0.0, y as f32), Vec2::new(1.0, 0.0));
+        let mut min_intersection = Geometry::line_intersect(&left_side, &horz_line);
+        let mut max_intersection = Geometry::line_intersect(&right_side, &horz_line);
+        if min_intersection.x > max_intersection.x { 
+            let temp = min_intersection; 
+            min_intersection = max_intersection; 
+            max_intersection = temp; 
+        }
+
+        for x in min_intersection.x as u32..max_intersection.x as u32 + 1{
+            buffer.put_pixel(x, y as u32, *color);
+        }
+    }
+
+    fn draw_triangle_half_aa(buffer : &mut RgbImage, left_side : &Line, right_side : &Line, y : isize, color : &Rgb<u8>) {
+        let horz_line = Line::new(Vec2::new(0.0, y as f32), Vec2::new(1.0, 0.0));
+        let mut min_intersection = Geometry::line_intersect(&left_side, &horz_line);
+        let mut max_intersection = Geometry::line_intersect(&right_side, &horz_line);
+        if min_intersection.x > max_intersection.x { 
+            let temp = min_intersection; 
+            min_intersection = max_intersection; 
+            max_intersection = temp; 
+        }
+
+        let min_intersection_x_rounded = min_intersection.x as u32;
+        let max_intersection_x_rounded = max_intersection.x as u32;
+
+        let min_aa = min_intersection_x_rounded as f32 - min_intersection.x + 0.5;
+        let max_aa = max_intersection.x - max_intersection_x_rounded as f32 + 0.5;
+
+        for x in min_intersection_x_rounded + 1..max_intersection_x_rounded{
+            buffer.put_pixel(x, y as u32, *color);
+        }
+
+        let min_pixel = buffer.get_pixel_mut(min_intersection_x_rounded, y as u32);
+        let min_pixel_add = Rgb([(color[0] as f32 * min_aa) as u8, (color[1] as f32 * min_aa) as u8, (color[2] as f32 * min_aa) as u8]);
+        for i in 0..3{
+            min_pixel[i] = Math::min(min_pixel[i] as u32 + min_pixel_add[i] as u32, 255) as u8;
+        }
+
+        let max_pixel = buffer.get_pixel_mut(max_intersection_x_rounded, y as u32);
+        let max_pixel_add = Rgb([(color[0] as f32 * max_aa) as u8, (color[1] as f32 * max_aa) as u8, (color[2] as f32 * max_aa) as u8]);
+        for i in 0..3{
+            max_pixel[i] = Math::min(max_pixel[i] as u32 + max_pixel_add[i] as u32, 255) as u8;
+        }
+    }
+
+    pub fn draw_triange(buffer : &mut RgbImage, verts : &[IVec2; 3], color : &Rgb::<u8>) {
+        ImageOps::draw_triangle_universal(buffer, verts, color, ImageOps::draw_triangle_half);
+    }
+
+    pub fn draw_triange_aa(buffer : &mut RgbImage, verts : &[IVec2; 3], color : &Rgb::<u8>) {
+        ImageOps::draw_triangle_universal(buffer, verts, color, ImageOps::draw_triangle_half_aa);
+    }
+    // endregion
+
     // Draw only lines that are fully inside the buffer.
     pub fn draw_line(buffer : &mut RgbImage, start : &IVec2, end : &IVec2, color : &Rgb::<u8>, width : u32 ) {
         let direction = &(end - start).vec2().normalized() * width as f32;
-        let orth_direction = IVec2::new(-direction.y as isize, direction.x as isize);
-        let mut orth_direction_points : Vec<IVec2> = Geometry::one_pixel_line_pixels(&IVec2::zero(), &(&IVec2::zero() - &orth_direction));
-        orth_direction_points.append(&mut Geometry::one_pixel_line_pixels(&IVec2::zero(), &orth_direction));
+        let orth_direction = IVec2::new((-direction.y * 0.5) as isize, (direction.x * 0.5) as isize);
 
-        for point_pos in Geometry::one_pixel_line_pixels(start, end) {
-            for orth_dir_point in &orth_direction_points {
-                let global_point_pos = &point_pos + orth_dir_point;
-                buffer.put_pixel(global_point_pos.x as u32, global_point_pos.y as u32, *color);
-            }
-        }
+        let line_points = [start + &orth_direction, end + &orth_direction, end - &orth_direction, start - &orth_direction];
+
+        ImageOps::draw_triange(buffer, &[line_points[0], line_points[1], line_points[2]], color);
+        ImageOps::draw_triange(buffer, &[line_points[0], line_points[2], line_points[3]], color);
     } 
 
     fn draw_rect_outline_one_pixel(buffer : &mut RgbImage, aabb : &IAABB, color : &Rgb::<u8>) {   
@@ -280,6 +415,7 @@ impl ops::Mul<&Vec2> for f32 {
 //endregion
 
 // region IVec2 
+#[derive(Clone, Copy)]
 pub struct IVec2{
     pub x : isize,
     pub y : isize

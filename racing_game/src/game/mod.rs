@@ -1,5 +1,6 @@
 extern crate include_dir;
 extern crate rand;
+extern crate readonly;
 
 use rand::*;
 use crate::image::{RgbImage, RgbaImage};
@@ -37,7 +38,7 @@ pub struct Game {
     billboards : Billboards,
     horizon : Horizon,
 
-    city_map : CityMap,
+    pub city_map : CityMap,
 
     screen_manager : UIScreenManager
 }
@@ -71,8 +72,8 @@ impl Game {
         let mut generation_rng = rand::rngs::StdRng::from_seed([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]);
         let parameters = city_map::GenerationParameters { 
             city_count : 9, 
-            grid_size : IVec2::new(20, 20),
-            min_distance_between_cities : 2.0 
+            size : IVec2::new(200, 200),
+            min_distance_between_cities : 50.0 
         };
         let city_map = CityMap::generate(&mut generation_rng, parameters);
 
@@ -125,15 +126,14 @@ impl Game {
     }
 
     fn render(&mut self, mut buffer : RgbImage) {
-        self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
+        if self.screen_manager.is_game_visible() {
+            self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
+            self.road.render_from_y_data(&mut buffer, &self.camera);
+            self.car.render(&mut buffer);
+            self.billboards.render_all(&self.camera, &self.road.y_data, &mut buffer, 150.0);
+        }
 
-        self.road.render_from_y_data(&mut buffer, &self.camera);
-
-        self.car.render(&mut buffer);
-
-        self.billboards.render_all(&self.camera, &self.road.y_data, &mut buffer, 150.0);
-
-        self.screen_manager.render(&mut buffer);
+        self.screen_manager.render(&self, &mut buffer);
 
         self.render.render(&mut self.window, buffer);
     }

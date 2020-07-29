@@ -7,5 +7,5 @@ pub use map_screen::*;
 
 pub trait UIScreen {
     fn update(&mut self, game : &Game);
-    fn render(&self, buffer : &mut RgbImage);
+    fn render(&self, game : &Game, buffer : &mut RgbImage);
 }

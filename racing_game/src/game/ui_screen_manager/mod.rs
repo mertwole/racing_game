@@ -35,6 +35,13 @@ impl UIScreenManager {
         UIScreenManager { screens, current_screen : Screen::Map }
     }
 
+    pub fn is_game_visible(&self) -> bool {
+        match self.current_screen {
+            Screen::GameUI => { true }
+            _ => { false }
+        }
+    }
+
     pub fn update(&mut self, game : &mut Game) {
         self.screens.get_mut(&Screen::Map).unwrap().update(game);
     }   
@@ -43,7 +50,7 @@ impl UIScreenManager {
         self.current_screen = screen;
     }
 
-    pub fn render(&self, buffer : &mut RgbImage) {
-        self.screens.get(&Screen::Map).unwrap().render(buffer);
+    pub fn render(&self, game : &Game, buffer : &mut RgbImage) {
+        self.screens.get(&Screen::Map).unwrap().render(game, buffer);
     }
 }

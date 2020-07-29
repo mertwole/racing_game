@@ -10,12 +10,15 @@ use road::*;
 
 pub struct GenerationParameters{
     pub city_count : u32,
-    pub grid_size : IVec2,
+    pub size : IVec2,
     pub min_distance_between_cities : f32
 }
 
+#[readonly::make]
 pub struct CityMap{
-    cities : Vec<City>
+    pub cities : Vec<City>,
+    pub roads : Vec<Road>,
+    pub size : IVec2
 }
 
 impl CityMap {
@@ -79,7 +82,7 @@ impl CityMap {
         for _i in 0..parameters.city_count {
             // Regenerate city while it is too close to another cities.
             'outer : loop {  
-                let new_city_pos = IVec2::new(rng.next_u32() as isize % parameters.grid_size.x, rng.next_u32() as isize % parameters.grid_size.x);
+                let new_city_pos = IVec2::new(rng.next_u32() as isize % parameters.size.x, rng.next_u32() as isize % parameters.size.x);
                 
                 for city_position in &city_positions {
                     let new_city_dist_sqr = (&new_city_pos - &city_position).sqr_len() as f32;
@@ -145,10 +148,12 @@ impl CityMap {
             } else { removed += 1; }
         }     
 
-        for road in &roads { println!("source : {} destination : {}", road.0, road.1); }
+        //for road in &roads { println!("source : {} destination : {}", road.0, road.1); }
 
+        let roads : Vec<Road> = roads.into_iter().map(|road| Road::new(city_positions[road.0].clone(), city_positions[road.1].clone())).collect();
         let cities : Vec<City> = city_positions.into_iter().map(|pos| City { position : pos }).collect();
 
+        /*
         for y in 0..parameters.grid_size.y {
             'x : for x in 0..parameters.grid_size.x {
                 for i in 0..cities.len() {
@@ -157,8 +162,8 @@ impl CityMap {
                 print!("#");
             }
             println!();
-        }
+        }*/
 
-        CityMap { cities }
+        CityMap { cities, roads, size : parameters.size }
     }
 }
