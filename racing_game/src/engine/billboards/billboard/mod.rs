@@ -17,8 +17,8 @@ pub struct BillboardFactory {
 }
 
 impl BillboardFactory {
-    pub fn new(spritesheet : &RgbaImage, meta_file : &File) -> BillboardFactory {
-        BillboardFactory { lods : Rc::from(BillboardLods::new(spritesheet, meta_file)) }
+    pub fn new(spritesheet : &RgbaImage, meta_file_content : &[u8]) -> BillboardFactory {
+        BillboardFactory { lods : Rc::from(BillboardLods::new(spritesheet, meta_file_content)) }
     }
 
     pub fn construct(&self, road_distance : f32, offset : f32) -> Billboard {

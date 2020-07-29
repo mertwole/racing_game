@@ -1,8 +1,5 @@
 use std::slice;
 use std::mem;
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
 
 use image::*;
 
@@ -26,12 +23,9 @@ pub struct BillboardLods{
 }
 
 impl BillboardLods{
-    pub fn new(spritesheet : &RgbaImage, meta_file : &File) -> BillboardLods {
-        let mut reader = BufReader::new(meta_file);
-        let mut file_data : Vec<u8> = Vec::new();
-        reader.read_to_end(&mut file_data).unwrap();
-        let sprites_data_raw = file_data.as_ptr() as *const SpriteDescr;
-        let sprites_data_count = file_data.len() / mem::size_of::<SpriteDescr>();
+    pub fn new(spritesheet : &RgbaImage, meta_file_content : &[u8]) -> BillboardLods {
+        let sprites_data_raw = meta_file_content.as_ptr() as *const SpriteDescr;
+        let sprites_data_count = meta_file_content.len() / mem::size_of::<SpriteDescr>();
         let sprites_data = unsafe { slice::from_raw_parts(sprites_data_raw, sprites_data_count) };
 
         let mut lods : Vec<Lod> = Vec::with_capacity(sprites_data.len());

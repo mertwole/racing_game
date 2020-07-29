@@ -43,17 +43,18 @@ impl ImageOps {
         }
     } 
 
-    fn draw_rect_outline_one_pixel(buffer : &mut RgbImage, min : &IVec2, max : &IVec2, color : &Rgb::<u8>) {   
-        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(min.x, max.y), &IVec2::new(max.x, max.y), color); // Top.    
-        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(max.x, max.y), &IVec2::new(max.x, min.y), color); // Right.     
-        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(max.x, min.y), &IVec2::new(min.x, min.y), color); // Bottom.
-        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(min.x, min.y), &IVec2::new(min.x, max.y), color); // Left.
+    fn draw_rect_outline_one_pixel(buffer : &mut RgbImage, aabb : &IAABB, color : &Rgb::<u8>) {   
+        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(aabb.min.x, aabb.max.y), &IVec2::new(aabb.max.x, aabb.max.y), color); // Top.    
+        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(aabb.max.x, aabb.max.y), &IVec2::new(aabb.max.x, aabb.min.y), color); // Right.     
+        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(aabb.max.x, aabb.min.y), &IVec2::new(aabb.min.x, aabb.min.y), color); // Bottom.
+        ImageOps::draw_line_one_pixel(buffer, &IVec2::new(aabb.min.x, aabb.min.y), &IVec2::new(aabb.min.x, aabb.max.y), color); // Left.
     }
 
-    pub fn draw_rect_outline(buffer : &mut RgbImage, min : &IVec2, max : &IVec2, color : &Rgb::<u8>, width : u32 ) {
-        for i in 0..width as isize {
-            let border_offset = IVec2::new(i, i);
-            ImageOps::draw_rect_outline_one_pixel(buffer, &(min - &border_offset), &(max + &border_offset), color);
+    pub fn draw_rect_outline(buffer : &mut RgbImage, aabb : &IAABB, color : &Rgb::<u8>, width : u32 ) {
+        let mut one_line_aabb = aabb.clone();
+        for _i in 0..width as isize {
+            ImageOps::draw_rect_outline_one_pixel(buffer, &one_line_aabb, color);
+            one_line_aabb.expand(IVec2::new(1, 1));
         }
     }
 }
@@ -124,11 +125,11 @@ impl Geometry {
         let sector = IVec2::new(Math::sgn_isize(delta.x), Math::sgn_isize(delta.y));
 
         if sector.x == 0 { 
-            return (Math::min(start.y, end.y + 1)..Math::max(start.y, end.y + 1)).map(|y| IVec2::new(start.x, y)).collect();
+            return (Math::min(start.y, end.y)..Math::max(start.y, end.y) + 1).map(|y| IVec2::new(start.x, y)).collect();
         }
 
         if sector.y == 0 { 
-            return (Math::min(start.x, end.x + 1)..Math::max(start.x, end.x + 1)).map(|x| IVec2::new(x, start.y)).collect();
+            return (Math::min(start.x, end.x)..Math::max(start.x, end.x) + 1).map(|x| IVec2::new(x, start.y)).collect();
         }
 
         let mut points : Vec<IVec2> = Vec::with_capacity((delta.x.abs() + delta.y.abs()) as usize);
@@ -144,6 +145,29 @@ impl Geometry {
         }
     }
 }
+
+// region IAABB
+pub struct IAABB{
+    pub min : IVec2,
+    pub max : IVec2
+}
+
+impl IAABB {
+    pub fn new(min : IVec2, max : IVec2) -> IAABB {
+        IAABB { min, max }
+    } 
+
+    pub fn clone(&self) -> IAABB {
+        IAABB { min : self.min.clone(), max : self.max.clone() }
+    }
+
+    pub fn expand(&mut self, value : IVec2) {
+        self.min = &self.min - &value;
+        self.max = &self.max + &value;
+    }
+}
+
+// endregion
 
 // region LineSegment 
 
