@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use image::{RgbImage, Rgb};
+use image::RgbImage;
 
 use crate::engine::ui::font::*;
 use crate::engine::common::IVec2;
@@ -11,6 +11,7 @@ mod ui_screen;
 use ui_screen::*;
 
 pub struct UIScreenManager{
+    game : Option<Rc<Game>>,
     screens : HashMap<Screen, Box<dyn UIScreen>>,
     current_screen : Screen
 }
@@ -32,7 +33,13 @@ impl UIScreenManager {
 
         screens.insert(Screen::Map, map_screen);
 
-        UIScreenManager { screens, current_screen : Screen::Map }
+        UIScreenManager { screens, current_screen : Screen::GameUI, game : None }
+    }
+
+    pub fn init(&mut self, game : Rc<Game>) {
+        self.game = Some(game);
+
+        self.go_to_screen(Screen::Map);
     }
 
     pub fn is_game_visible(&self) -> bool {
@@ -46,15 +53,16 @@ impl UIScreenManager {
         self.screens.get_mut(&self.current_screen).unwrap().process_input(input);
     }
 
-    pub fn update(&mut self, game : &mut Game) {
-        self.screens.get_mut(&self.current_screen).unwrap().update(game);
+    pub fn update(&mut self) {
+        self.screens.get_mut(&self.current_screen).unwrap().update(self.game.as_mut().unwrap());
     }   
 
     pub fn go_to_screen(&mut self, screen : Screen) {
+        self.screens.get_mut(&screen).unwrap().init(self.game.as_mut().unwrap());
         self.current_screen = screen;
     }
 
-    pub fn render(&self, game : &Game, buffer : &mut RgbImage) {
-        self.screens.get(&self.current_screen).unwrap().render(game, buffer);
+    pub fn render(&self, buffer : &mut RgbImage) {
+        self.screens.get(&self.current_screen).unwrap().render(self.game.as_ref().unwrap(), buffer);
     }
 }

@@ -9,7 +9,8 @@ use road_data::*;
 pub struct RoadYData {
     pub distance : f32,
     pub norm_road_offset : f32,
-    pub norm_road_width : f32
+    pub norm_road_width : f32,
+    pub is_visible : bool
 }
 
 pub struct Road {
@@ -57,6 +58,10 @@ impl Road {
 
             // Occlusion culling.
             if vis_road_dist > camera.far_plane || vis_road_dist < 0.0 { continue; }
+            if !self.data.is_visible(vis_road_dist + camera.road_distance) { 
+                self.y_data.push(RoadYData { distance : vis_road_dist, norm_road_offset : 0.0, norm_road_width : 0.0, is_visible : false });
+                continue; 
+            }
 
             // Horizontal offset.
             if prev_y_vis_road_dist != 0.0 { 
@@ -75,7 +80,7 @@ impl Road {
             // Road width.
             let norm_road_width = hill_width_multiplier * camera.screen_dist / vis_road_dist;
 
-            self.y_data.push(RoadYData { distance : vis_road_dist, norm_road_offset, norm_road_width });
+            self.y_data.push(RoadYData { distance : vis_road_dist, norm_road_offset, norm_road_width, is_visible : true });
         }
     }
 
@@ -111,30 +116,38 @@ impl Road {
 
             let ground_color = if is_horz_line { self.ground_color_main } else { self.ground_color_secondary };
 
-            // Left ground.
-            for x in 0..Math::min(left_border_px, image.width() as i32 - 1) {
-                image.put_pixel(x as u32, y, ground_color);
-            } 
+            if y_data.is_visible {
+                // Left ground.
+                for x in 0..Math::min(left_border_px, image.width() as i32 - 1) {
+                    image.put_pixel(x as u32, y, ground_color);
+                } 
 
-            // Road.
-            // Render main texture if there is horz line, secondary texture elsewhere.
-            if road_width_px < self.texture.width() - 1 {              
-                let mut road_tex_sample_x = if is_horz_line { 0 } else { self.texture.width() - road_width_px };
-                let mut road_tex_sample_y = if is_horz_line { self.texture.height() - road_width_px } else { road_width_px - 1 };
-                road_tex_sample_y = self.texture.height() - road_tex_sample_y - 1;
+                // Road.
+                // Render main texture if there is horz line, secondary texture elsewhere.
+                if road_width_px < self.texture.width() - 1 {              
+                    let mut road_tex_sample_x = if is_horz_line { 0 } else { self.texture.width() - road_width_px };
+                    let mut road_tex_sample_y = if is_horz_line { self.texture.height() - road_width_px } else { road_width_px - 1 };
+                    road_tex_sample_y = self.texture.height() - road_tex_sample_y - 1;
 
-                for x in left_border_px..right_border_px + 1{
-                    let tex_pixel = self.texture.get_pixel(road_tex_sample_x, road_tex_sample_y);
-                    road_tex_sample_x += 1;
-                    if x < 0 || x >= image.width() as i32{ continue; }
-                    image.put_pixel(x as u32, y, *tex_pixel);
+                    for x in left_border_px..right_border_px + 1{
+                        let tex_pixel = self.texture.get_pixel(road_tex_sample_x, road_tex_sample_y);
+                        road_tex_sample_x += 1;
+                        if x < 0 || x >= image.width() as i32{ continue; }
+                        image.put_pixel(x as u32, y, *tex_pixel);
+                    }
+                }
+
+                // Right ground
+                for x in Math::max(right_border_px + 1, 0)..(image.width() as i32) {
+                    image.put_pixel(x as u32, y, ground_color);
                 }
             }
-
-            // Right ground
-            for x in Math::max(right_border_px + 1, 0)..(image.width() as i32) {
-                image.put_pixel(x as u32, y, ground_color);
-            } 
+            else {
+                // Draw ground only
+                for x in 0..image.width() {
+                    image.put_pixel(x, y, ground_color);
+                }
+            }
         }
     }
 }

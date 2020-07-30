@@ -12,46 +12,46 @@ use super::UIScreen;
 pub struct MapScreen{
     page : UIPage,
     map_center_pos : IVec2,
+    accesible_city_ids : Vec<usize>,
 
     city_sprite : RgbaImage,
     road_line_color : Rgb<u8>,
     road_line_width : u32,
-
-    test_pos : IVec2
 }
 
 impl MapScreen {
     pub fn new(resolution : &IVec2, font : Rc<Font>) -> MapScreen {
         let mut map_page = UIPage::new(resolution.clone(), Some(Rgb([100, 100, 100])));
 
-        let test_image = Game::load_image_rgba("ferrari.png");
-        
-        let test_image = Rc::from(test_image);
+        let city_sprite = Game::load_image_rgba("ending_city_selected.png");
 
-        let text = UIText::new(font.clone(), String::from("ABC"));
-        let image = UIImage::new(test_image.clone());
-
-        map_page.add_control(Box::from(text), Pivot::Center, IVec2::new(100, 100));
-        map_page.add_control(Box::from(image), Pivot::Center, IVec2::new(0, 0));
-
-        let city_sprite = Game::load_image_rgba("city_circle.png");
-
-        MapScreen { page : map_page, map_center_pos : IVec2::new(320, 180), city_sprite, road_line_color : Rgb([0, 255, 0]), road_line_width : 4, test_pos : IVec2::new(300, 300) }
+        MapScreen { 
+            page : map_page, 
+            map_center_pos : IVec2::new(320, 180), 
+            city_sprite, 
+            road_line_color : Rgb([0, 255, 0]), 
+            road_line_width : 4, 
+            accesible_city_ids : Vec::new() 
+        }
     }
 }
 
 impl UIScreen for MapScreen {
+    fn init(&mut self, game : &Game) {
+        self.accesible_city_ids = game.city_map.get_accesible_city_ids();
+    }   
+
     fn update(&mut self, game : &Game) {
 
-    }   
+    }  
 
     fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
         for (event, event_type) in input {
             match (event, event_type) {
-                (InputEvent::UIUp, EventType::Pressed) => { self.test_pos = &self.test_pos + &IVec2::new(0, 10); }
-                (InputEvent::UIDown, EventType::Pressed) => { self.test_pos = &self.test_pos + &IVec2::new(0, -10); }
-                (InputEvent::UILeft, EventType::Pressed) => { self.test_pos = &self.test_pos + &IVec2::new(-10, 0); }
-                (InputEvent::UIRight, EventType::Pressed) => { self.test_pos = &self.test_pos + &IVec2::new(10, 0); }
+                (InputEvent::UIUp, EventType::Pressed) => {  }
+                (InputEvent::UIDown, EventType::Pressed) => {  }
+                (InputEvent::UILeft, EventType::Pressed) => {  }
+                (InputEvent::UIRight, EventType::Pressed) => {  }
                 _ => { }
             }
         }
@@ -65,14 +65,14 @@ impl UIScreen for MapScreen {
         let left_bottom = &self.map_center_pos - &(&map_size / 2); 
 
         for road in &game.city_map.roads { 
-            ImageOps::draw_line(buffer, &(&road.source_pos + &left_bottom), &(&road.destination_pos + &left_bottom), &self.road_line_color, self.road_line_width); 
+            let road_start = &game.city_map.cities[road.source_id].position + &left_bottom;
+            let road_end = &game.city_map.cities[road.destination_id].position + &left_bottom;
+            ImageOps::draw_line(buffer, &road_start, &road_end, &self.road_line_color, self.road_line_width); 
         }
 
         let half_city_sprite_size = &IVec2::new(self.city_sprite.width() as isize, self.city_sprite.height() as isize) / 2;
         for city in &game.city_map.cities { 
             ImageOps::overlay_rgba(buffer, &self.city_sprite, &(&(&city.position + &left_bottom) - &half_city_sprite_size)); 
         }
-
-        ImageOps::overlay_rgba(buffer, &self.city_sprite, &self.test_pos); 
     }
 }

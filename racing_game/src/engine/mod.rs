@@ -1,5 +1,4 @@
 pub mod camera;
-pub mod car;
 pub mod common;
 pub mod road;
 pub mod billboards;

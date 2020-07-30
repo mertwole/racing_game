@@ -2,11 +2,11 @@ use rand::{RngCore, rngs::StdRng};
 
 use crate::engine::common::{IVec2, LineSegment, Geometry};
 
-mod city;
-mod road;
+pub mod city;
+pub mod road_path;
 
 use city::*;
-use road::*;
+use road_path::*;
 
 pub struct GenerationParameters{
     pub city_count : u32,
@@ -17,8 +17,11 @@ pub struct GenerationParameters{
 #[readonly::make]
 pub struct CityMap{
     pub cities : Vec<City>,
-    pub roads : Vec<Road>,
-    pub size : IVec2
+    pub roads : Vec<RoadPath>,
+    pub size : IVec2,
+    pub start_city_id : usize,
+    pub finish_city_id : usize,
+    pub current_city_id : usize
 }
 
 impl CityMap {
@@ -96,6 +99,21 @@ impl CityMap {
             }   
         }
 
+        // Select start and end cities.
+        let mut start_city_id = 0; // Left bottom city.
+        let mut finish_city_id = 0; // Right top city.
+        for i in 0..city_positions.len() {
+            if city_positions[i].x < city_positions[start_city_id].x 
+            || (city_positions[i].x == city_positions[start_city_id].x && city_positions[i].y < city_positions[start_city_id].y) {
+                start_city_id = i;
+            }
+
+            if city_positions[i].x > city_positions[finish_city_id].x 
+            || (city_positions[i].x == city_positions[finish_city_id].x && city_positions[i].y > city_positions[finish_city_id].y) {
+                finish_city_id = i;
+            }
+        }   
+
         // First, all possible city pairs.
         let mut roads : Vec<(usize, usize)> = Vec::with_capacity((city_positions.len() * (city_positions.len())) / 2);
         for i in 0..city_positions.len() {
@@ -148,22 +166,24 @@ impl CityMap {
             } else { removed += 1; }
         }     
 
-        //for road in &roads { println!("source : {} destination : {}", road.0, road.1); }
-
-        let roads : Vec<Road> = roads.into_iter().map(|road| Road::new(city_positions[road.0].clone(), city_positions[road.1].clone())).collect();
+        let roads : Vec<RoadPath> = roads.into_iter().map(|road| RoadPath::new(road.0, road.1)).collect();
         let cities : Vec<City> = city_positions.into_iter().map(|pos| City { position : pos }).collect();
 
-        /*
-        for y in 0..parameters.grid_size.y {
-            'x : for x in 0..parameters.grid_size.x {
-                for i in 0..cities.len() {
-                    if cities[i].position.x == x && cities[i].position.y == y { print!("{}", i); continue 'x; }
-                }
-                print!("#");
-            }
-            println!();
-        }*/
+        CityMap { cities, roads, size : parameters.size, start_city_id, finish_city_id, current_city_id : start_city_id }
+    }
 
-        CityMap { cities, roads, size : parameters.size }
+    pub fn get_accesible_city_ids(&self) -> Vec<usize>{
+        let mut accesible : Vec<usize> = Vec::new();
+        for road in &self.roads {
+            if road.source_id == self.current_city_id {
+                accesible.push(road.destination_id);
+            }
+
+            if road.destination_id == self.current_city_id {
+                accesible.push(road.source_id);
+            }
+        }
+
+        accesible
     }
 }
