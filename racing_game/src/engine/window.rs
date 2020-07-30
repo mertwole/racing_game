@@ -1,7 +1,9 @@
-use glfw::{Context, Key, Action};
 use std::sync::mpsc::Receiver;
 
-use crate::engine::input::{InputKey, KeyState};
+use glfw::{Context, Action};
+pub use glfw::{Key};
+
+use crate::engine::input::EventType;
 
 pub struct WindowParameters {
     pub width : u32,
@@ -33,25 +35,17 @@ impl Window{
         Window { window, glfw, events }
     }
 
-    pub fn update_events(&mut self) -> Vec<(InputKey, KeyState)>{
-        let mut events : Vec<(InputKey, KeyState)> = Vec::new();
+    pub fn get_events(&mut self) -> Vec<(Key, EventType)>{
+        let mut events : Vec<(Key, EventType)> = Vec::new();
 
         for (_, event) in glfw::flush_messages(&self.events) {
             match event {
                 glfw::WindowEvent::FramebufferSize(width, height) => {
                     unsafe { gl::Viewport(0, 0, width, height) }
                 }
-                glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => self.window.set_should_close(true),
-
                 
-                glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) => events.push((InputKey::LEFT, KeyState::PRESSED)),
-                glfw::WindowEvent::Key(Key::Left, _, Action::Release, _) => events.push((InputKey::LEFT, KeyState::RELEASED)),
-
-                glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) => events.push((InputKey::RIGHT, KeyState::PRESSED)),
-                glfw::WindowEvent::Key(Key::Right, _, Action::Release, _) => events.push((InputKey::RIGHT, KeyState::RELEASED)),
-
-                glfw::WindowEvent::Key(Key::Up, _, Action::Press, _) => events.push((InputKey::UP, KeyState::PRESSED)),
-                glfw::WindowEvent::Key(Key::Up, _, Action::Release, _) => events.push((InputKey::UP, KeyState::RELEASED)),
+                glfw::WindowEvent::Key(key, _, Action::Press, _) => events.push((key, EventType::Pressed)),
+                glfw::WindowEvent::Key(key, _, Action::Release, _) => events.push((key, EventType::Released)),
 
                 _ => {}
             }

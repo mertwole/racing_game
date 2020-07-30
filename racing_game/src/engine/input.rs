@@ -1,49 +1,40 @@
+use std::collections::HashMap;
+use std::iter;
+
 use crate::engine::window::*;
 
-#[derive(PartialEq)]
-pub enum InputKey{
-    LEFT,
-    RIGHT,
-    UP
+#[derive(Copy, Clone)]
+pub enum EventType{
+    Pressed,
+    Released
 }
 
-pub enum KeyState{
-    PRESSED,
-    RELEASED
+pub struct Input<T : Sized + Copy + Clone>{
+    key_bindings : HashMap<Key, Vec<T>>
 }
 
-pub struct Input{
-    vertical : i32,
-    horizontal : i32,
-
-    button_states : Vec<(InputKey, bool)>
-}
-
-impl Input{
-    pub fn new() -> Input {
-        Input { vertical : 0, horizontal : 0, button_states : vec![(InputKey::LEFT, false), (InputKey::RIGHT, false), (InputKey::UP, false)] }
+impl<T : Sized + Copy + Clone> Input<T>{
+    pub fn new() -> Input<T> {
+        let key_bindings = HashMap::<Key, Vec<T>>::new();
+        Input { key_bindings }
     }
 
-    pub fn process(&mut self, window : &mut Window) {
-        let events = window.update_events();
-
-        for (key, state) in events {
-            let state_bool = match state {
-                KeyState::PRESSED => { true },
-                KeyState::RELEASED => { false }
-            };
-
-            for button_state in &mut self.button_states {
-                if button_state.0 == key { button_state.1 = state_bool; }
-            }
+    pub fn bind_action(&mut self, action : T, key : Key) {
+        let binding = self.key_bindings.get_mut(&key);
+        match binding {
+            Some(actions) => { actions.push(action); }
+            None => { self.key_bindings.insert(key, vec![action]); }
         }
     }
 
-    pub fn get_horizontal(&self) -> i32 {
-        self.vertical
-    }
-
-    pub fn get_vertical(&self) -> i32 {
-        if self.button_states[2].1 { 1 } else { 0 }
+    pub fn process(&mut self, window : &mut Window) -> Vec<(T, EventType)> {
+        window
+        .get_events()
+        .into_iter()
+        .map(|(key, event_type)| (self.key_bindings.get(&key), event_type))
+        .filter(|(actions, _)| actions.is_some())
+        .map(|(actions, event_type)| ((*actions.unwrap()).clone(), event_type))
+        .map(|(actions, event_type)| { let actions_len = actions.len(); actions.into_iter().zip(iter::repeat(event_type).take(actions_len)) })
+        .fold(Vec::<(T, EventType)>::new(), |mut acc, x| { acc.append(&mut x.collect()); acc })
     }
 }

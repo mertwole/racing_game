@@ -5,7 +5,7 @@ use image::{RgbImage, RgbaImage, Rgb};
 use crate::engine::common::{IVec2, ImageOps};
 use crate::engine::ui::font::*;
 use crate::engine::ui::{UIPage, UIText, UIImage, Pivot};
-use crate::game::Game;
+use crate::game::{Game, InputEvent, EventType};
 
 use super::UIScreen;
 
@@ -15,7 +15,9 @@ pub struct MapScreen{
 
     city_sprite : RgbaImage,
     road_line_color : Rgb<u8>,
-    road_line_width : u32
+    road_line_width : u32,
+
+    test_pos : IVec2
 }
 
 impl MapScreen {
@@ -34,13 +36,25 @@ impl MapScreen {
 
         let city_sprite = Game::load_image_rgba("city_circle.png");
 
-        MapScreen { page : map_page, map_center_pos : IVec2::new(320, 180), city_sprite, road_line_color : Rgb([0, 255, 0]), road_line_width : 4 }
+        MapScreen { page : map_page, map_center_pos : IVec2::new(320, 180), city_sprite, road_line_color : Rgb([0, 255, 0]), road_line_width : 4, test_pos : IVec2::new(300, 300) }
     }
 }
 
 impl UIScreen for MapScreen {
     fn update(&mut self, game : &Game) {
 
+    }   
+
+    fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
+        for (event, event_type) in input {
+            match (event, event_type) {
+                (InputEvent::UIUp, EventType::Pressed) => { self.test_pos = &self.test_pos + &IVec2::new(0, 10); }
+                (InputEvent::UIDown, EventType::Pressed) => { self.test_pos = &self.test_pos + &IVec2::new(0, -10); }
+                (InputEvent::UILeft, EventType::Pressed) => { self.test_pos = &self.test_pos + &IVec2::new(-10, 0); }
+                (InputEvent::UIRight, EventType::Pressed) => { self.test_pos = &self.test_pos + &IVec2::new(10, 0); }
+                _ => { }
+            }
+        }
     }   
 
     fn render(&self, game : &Game, buffer : &mut RgbImage) {
@@ -51,12 +65,14 @@ impl UIScreen for MapScreen {
         let left_bottom = &self.map_center_pos - &(&map_size / 2); 
 
         for road in &game.city_map.roads { 
-            ImageOps::draw_line(buffer, &(&road.source_pos + &left_bottom), &(&road.destination_pos + &left_bottom), &self.road_line_color, 3);//self.road_line_width); 
+            ImageOps::draw_line(buffer, &(&road.source_pos + &left_bottom), &(&road.destination_pos + &left_bottom), &self.road_line_color, self.road_line_width); 
         }
 
         let half_city_sprite_size = &IVec2::new(self.city_sprite.width() as isize, self.city_sprite.height() as isize) / 2;
         for city in &game.city_map.cities { 
             ImageOps::overlay_rgba(buffer, &self.city_sprite, &(&(&city.position + &left_bottom) - &half_city_sprite_size)); 
         }
+
+        ImageOps::overlay_rgba(buffer, &self.city_sprite, &self.test_pos); 
     }
 }

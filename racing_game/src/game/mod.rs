@@ -30,7 +30,7 @@ pub struct Game {
 
     window : Window,
     render : Render,
-    input : Input,
+    input : Input<InputEvent>,
 
     camera : Camera,
     road : Road,
@@ -43,6 +43,18 @@ pub struct Game {
     screen_manager : UIScreenManager
 }
 
+#[derive(Copy, Clone)]
+pub enum InputEvent{
+    Gas,
+    Left,
+    Right,
+
+    UIRight,
+    UILeft,
+    UIUp,
+    UIDown
+}
+
 impl Game {
     pub fn new() -> Game {
         let screen_width = 640;
@@ -50,8 +62,15 @@ impl Game {
 
         let window = Window::open(WindowParameters { width : screen_width, height : screen_height, title : String::from("title")});
         let render = Render::new(screen_width, screen_height);
-        let input = Input::new();
-        
+
+        let mut input = Input::<InputEvent>::new();
+        input.bind_action(InputEvent::Gas, Key::Up);
+
+        input.bind_action(InputEvent::UIUp, Key::Up);
+        input.bind_action(InputEvent::UIDown, Key::Down);
+        input.bind_action(InputEvent::UILeft, Key::Left);
+        input.bind_action(InputEvent::UIRight, Key::Right);
+
         let camera = Camera { screen_dist : 1.0, viewport_height : 1.0, y_pos : 1.0, far_plane : 150.0, pitch : 1.5, road_distance : 0.0 };  
         
         let road = Road::new(Game::load_image_rgb("road_tex.png"));
@@ -112,13 +131,16 @@ impl Game {
     fn update(&mut self, delta_time : f32) {
         self.road.compute_y_data(&self.camera, self.screen_height);
 
-        self.input.process(&mut self.window);
+        let input_queue = self.input.process(&mut self.window);
 
-        if self.input.get_vertical() == 1 {
-            self.car.gas(delta_time);
-        } else {
-            self.car.brake(delta_time);
+        for (event, event_type) in &input_queue {
+            match (event, event_type) {
+                (InputEvent::Gas, EventType::Pressed) => { self.car.gas(delta_time); }
+                _ => { }
+            }
         }
+
+        self.screen_manager.process_input(&input_queue);
 
         self.billboards.get_dynamic_mut(BillboardId(0)).road_distance += delta_time * 0.3;
 
@@ -126,12 +148,12 @@ impl Game {
     }
 
     fn render(&mut self, mut buffer : RgbImage) {
-        if self.screen_manager.is_game_visible() {
+        //if self.screen_manager.is_game_visible() {
             self.horizon.render(self.road.y_data.len() as u32 - 1, 0.0, &mut buffer);
             self.road.render_from_y_data(&mut buffer, &self.camera);
             self.car.render(&mut buffer);
             self.billboards.render_all(&self.camera, &self.road.y_data, &mut buffer, 150.0);
-        }
+        //}
 
         self.screen_manager.render(&self, &mut buffer);
 

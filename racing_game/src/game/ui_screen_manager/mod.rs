@@ -5,7 +5,7 @@ use image::{RgbImage, Rgb};
 
 use crate::engine::ui::font::*;
 use crate::engine::common::IVec2;
-use super::Game;
+use super::{Game, EventType, InputEvent};
 
 mod ui_screen;
 use ui_screen::*;
@@ -42,8 +42,12 @@ impl UIScreenManager {
         }
     }
 
+    pub fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
+        self.screens.get_mut(&self.current_screen).unwrap().process_input(input);
+    }
+
     pub fn update(&mut self, game : &mut Game) {
-        self.screens.get_mut(&Screen::Map).unwrap().update(game);
+        self.screens.get_mut(&self.current_screen).unwrap().update(game);
     }   
 
     pub fn go_to_screen(&mut self, screen : Screen) {
@@ -51,6 +55,6 @@ impl UIScreenManager {
     }
 
     pub fn render(&self, game : &Game, buffer : &mut RgbImage) {
-        self.screens.get(&Screen::Map).unwrap().render(game, buffer);
+        self.screens.get(&self.current_screen).unwrap().render(game, buffer);
     }
 }
