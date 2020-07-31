@@ -2,7 +2,7 @@ use crate::image::{RgbImage, Rgb};
 use super::camera::Camera;
 use super::common::Math;
 
-mod road_data;
+pub mod road_data;
 use road_data::*;
 
 #[derive(Clone, Copy)]
@@ -26,9 +26,9 @@ pub struct Road {
 }
 
 impl Road {
-    pub fn new(texture : RgbImage) -> Road {
+    pub fn new(texture : RgbImage, data : RoadData) -> Road {
         Road { 
-            data : RoadData::new(), 
+            data,
             width : 1.0, 
             lines_density : 0.5, 
             texture, 

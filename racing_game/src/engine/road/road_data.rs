@@ -1,18 +1,33 @@
 use super::Math;
 
-struct CurvatureSegment {
+#[derive(Clone)]
+pub struct CurvatureSegment {
     start : f32,
     end : f32,
     curvature : f32
 }
 
-struct Heel{
+impl CurvatureSegment {
+    pub fn new(start : f32, end : f32, curvature : f32) -> CurvatureSegment {
+        CurvatureSegment { start, end, curvature }
+    }
+}
+
+#[derive(Clone)]
+pub struct Heel{
     start : f32,
     end : f32,
     start_steepness : f32,
     end_steepness : f32
 }
 
+impl Heel {
+    pub fn new(start : f32, end : f32, start_steepness : f32, end_steepness : f32) -> Heel {
+        Heel { start, end, start_steepness, end_steepness }
+    }
+}
+
+#[derive(Clone)]
 pub struct RoadData {
     track_length : f32,
     start_offset : f32,
@@ -21,19 +36,8 @@ pub struct RoadData {
 }
 
 impl RoadData {
-    pub fn new() -> RoadData {
-        let curvatures = vec![
-            CurvatureSegment { start : 10.0, end : 30.0, curvature : 0.00005},
-            CurvatureSegment { start : 20.0, end : 40.0, curvature : -0.00001}
-        ];
-
-        let heels = vec![
-            Heel { start : 0.0, end : 25.0, start_steepness : 0.0, end_steepness : 0.001 },
-            Heel { start : 25.0, end : 75.0, start_steepness : 0.001, end_steepness : -0.001 },
-            Heel { start : 75.0, end : 100.0, start_steepness : -0.001, end_steepness : 0.0 }
-        ];
-
-        RoadData { track_length : 150.0, start_offset : 20.0, curvatures, heels }
+    pub fn new(start_offset : f32, length : f32, curvatures : Vec<CurvatureSegment>, heels : Vec<Heel>) -> RoadData {
+        RoadData { track_length : length, start_offset, curvatures, heels }
     }
 
     pub fn get_norm_segment_offset(&self, prev_segment_offset : f32, curr_segment_start : f32) -> f32 {

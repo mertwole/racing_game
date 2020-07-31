@@ -30,6 +30,14 @@ impl ImageOps {
         }
     }
 
+    pub fn fill_with_color(image : &mut RgbImage, color : &Rgb<u8>) {
+        for x in 0..image.width() {
+            for y  in 0..image.height() {
+                image.put_pixel(x, y, *color);
+            }
+        }
+    }
+
     // Draw only lines that are fully inside the buffer.
     pub fn draw_line_one_pixel(buffer : &mut RgbImage, start : &IVec2, end : &IVec2, color : &Rgb::<u8>) {
         if start.x < 0 || start.x >= buffer.width() as isize { return; }
@@ -440,6 +448,10 @@ impl IVec2{
 
     pub fn sqr_len(&self) -> isize {
         self.x * self.x + self.y * self.y
+    }
+
+    pub fn dot(&self, rhs : &IVec2) -> isize {
+        self.x * rhs.x + self.y * rhs.y
     }
 }
 

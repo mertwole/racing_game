@@ -19,9 +19,8 @@ pub struct CityMap{
     pub cities : Vec<City>,
     pub roads : Vec<RoadPath>,
     pub size : IVec2,
-    pub start_city_id : usize,
-    pub finish_city_id : usize,
-    pub current_city_id : usize
+    pub current_city_id : usize,
+    current_destination_city_id : usize
 }
 
 impl CityMap {
@@ -166,10 +165,35 @@ impl CityMap {
             } else { removed += 1; }
         }     
 
-        let roads : Vec<RoadPath> = roads.into_iter().map(|road| RoadPath::new(road.0, road.1)).collect();
-        let cities : Vec<City> = city_positions.into_iter().map(|pos| City { position : pos }).collect();
+        let mut roads : Vec<RoadPath> = roads.into_iter()
+        .map(|road| RoadPath::new(road.0, road.1))
+        .collect();
+        
+        let cities : Vec<City> = city_positions.into_iter()
+        .enumerate()
+        .map(|(id, pos)| City { 
+            position : pos,  
+            description : if id == start_city_id { 
+                CityDescription::Start 
+            } else if id == finish_city_id { 
+                CityDescription::Finish 
+            } else { 
+                CityDescription::Intermediate 
+            }
+        })
+        .collect();
 
-        CityMap { cities, roads, size : parameters.size, start_city_id, finish_city_id, current_city_id : start_city_id }
+        for road in &mut roads{ road.generate(rng, 1.0); }
+
+        CityMap { cities, roads, size : parameters.size, current_city_id : start_city_id, current_destination_city_id : start_city_id }
+    }
+
+    pub fn arrived_to_city(&mut self) {
+        self.current_city_id = self.current_destination_city_id;
+    }
+
+    pub fn set_city_destination(&mut self, destination : usize) {
+        self.current_destination_city_id = destination;
     }
 
     pub fn get_accesible_city_ids(&self) -> Vec<usize>{
@@ -185,5 +209,32 @@ impl CityMap {
         }
 
         accesible
+    }
+
+    pub fn get_accesible_road_ids(&self) -> Vec<usize> {
+        let mut accesible : Vec<usize> = Vec::new();
+
+        for i in 0..self.roads.len() {
+            let road = &self.roads[i];
+            if road.source_id == self.current_city_id || road.destination_id == self.current_city_id {
+                accesible.push(i);
+            }
+        }
+
+        accesible
+    }
+
+    pub fn get_current_road_meta(&self) -> RoadPathMeta {
+        for road in &self.roads {
+            if road.source_id == self.current_city_id || road.destination_id == self.current_destination_city_id {
+                return road.get_meta();
+            }
+
+            if road.source_id == self.current_destination_city_id && road.destination_id == self.current_city_id {
+                return road.get_reverse_meta();
+            }
+        }
+
+        panic!("incorrect road!");
     }
 }

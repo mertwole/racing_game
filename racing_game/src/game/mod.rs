@@ -17,8 +17,8 @@ use crate::engine::ui::font::*;
 mod city_map;
 use city_map::*;
 
-mod ride_manager;
-use ride_manager::*;
+mod ride;
+use ride::*;
 
 mod car;
 use car::*;
@@ -39,7 +39,7 @@ pub struct Game {
     pub city_map : CityMap,
     ui : UI,
 
-    ride_manager : RideManager
+    ride : Ride
 }
 
 #[derive(Copy, Clone)]
@@ -80,16 +80,12 @@ impl Game {
         };
         let city_map = CityMap::generate(&mut generation_rng, parameters);
         
-        let ride_manager = RideManager::new();
+        let ride = Ride::new();
 
         let ui = UI::new(&IVec2::new(screen_width as isize, screen_height as isize));
 
-        Game { window, render, input, screen_width, screen_height, city_map, ride_manager, ui }
+        Game { window, render, input, screen_width, screen_height, city_map, ride, ui }
     }
-}
-
-impl Game {
-    
 }
 
 // Game loop.
@@ -116,15 +112,38 @@ impl Game {
     fn update(&mut self, delta_time : f32) {
         let input_queue = self.input.process(&mut self.window); 
 
-        self.ui.update(delta_time);
-        self.ride_manager.update(delta_time);
+        let ui_events = self.ui.update(delta_time);
 
-        self.ride_manager.process_input(&input_queue);
+        for event in ui_events {
+            match event {
+                UIEvent::StartRide => { 
+                    self.ride.start_ride(self.city_map.get_current_road_meta()); 
+                }
+                UIEvent::SelectCityDestination(destination) => {
+                    self.city_map.set_city_destination(destination);
+                }
+                _ => { }
+            } 
+        }
+
+        let ride_events = self.ride.update(delta_time);
+
+        for event in ride_events {
+            match event {
+                RideEvent::Finished => { 
+                    self.city_map.arrived_to_city();
+                    self.ui.enter_city(); 
+                }
+                _ => { }
+            } 
+        }
+
+        self.ride.process_input(&input_queue);
         self.ui.process_input(&input_queue);
     }
 
     fn render(&mut self, mut buffer : RgbImage) {
-        self.ride_manager.render(&mut buffer);
+        self.ride.render(&mut buffer);
         self.ui.render(&mut buffer);
 
         self.render.render(&mut self.window, buffer);

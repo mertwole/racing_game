@@ -18,7 +18,7 @@ pub enum Screen{
 
 pub enum UIEvent{
     StartRide,
-    RideFinished,
+    SelectCityDestination(usize),
     ChangeScreen(Screen)
 }
 
@@ -46,11 +46,16 @@ impl UI {
 
     pub fn set_game(&mut self, game : Rc<Game>) {
         self.game = Some(game);
+        self.ui_screens.get_mut(&self.current_screen).unwrap().init(self.game.as_ref().unwrap());
     }
 
     fn change_screen(&mut self, screen : Screen) {
         self.current_screen = screen;
         self.ui_screens.get_mut(&screen).unwrap().init(self.game.as_ref().unwrap());
+    }
+
+    pub fn enter_city(&mut self) {
+        self.change_screen(Screen::Map);
     }
 
     pub fn update(&mut self, delta_time : f32) -> Vec<UIEvent> {
