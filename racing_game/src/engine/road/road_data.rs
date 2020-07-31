@@ -1,15 +1,51 @@
 use super::Math;
 
-#[derive(Clone)]
-pub struct CurvatureSegment {
-    start : f32,
-    end : f32,
-    curvature : f32
+pub trait OffsetSegment {
+    fn get_offset(&self, distance : f32) -> Option<f32>;
 }
 
-impl CurvatureSegment {
-    pub fn new(start : f32, end : f32, curvature : f32) -> CurvatureSegment {
-        CurvatureSegment { start, end, curvature }
+#[derive(Clone)]
+pub struct CurvedSegment {
+    start : f32,
+    end : f32,
+    start_offset : f32,
+    end_offset : f32
+}
+
+impl CurvedSegment {
+    pub fn new(start : f32, end : f32, start_offset : f32, end_offset : f32) -> CurvedSegment {
+        CurvedSegment { start, end, start_offset, end_offset }
+    }
+}
+
+impl OffsetSegment for CurvedSegment {
+    fn get_offset(&self, distance : f32) -> Option<f32> {
+        if distance < self.start || distance > self.end { return None; }
+
+        let lerp = (distance - self.start) / (self.end - self.start);
+        let lerp = lerp * lerp * (3.0 - 2.0 * lerp); // Smoothstep from glsl.
+        return Some(Math::lerp(self.start_offset, self.end_offset, lerp));
+    }
+}
+
+#[derive(Clone)]
+pub struct StraightSegment{
+    start : f32,
+    end : f32,
+    offset : f32
+}
+
+impl StraightSegment {
+    pub fn new(start : f32, end : f32, offset : f32) -> StraightSegment {
+        StraightSegment { start, end, offset }
+    }
+}
+
+impl OffsetSegment for StraightSegment {
+    fn get_offset(&self, distance : f32) -> Option<f32> {
+        if distance < self.start || distance > self.end { return None; }
+        
+        return Some(self.offset);
     }
 }
 
@@ -30,33 +66,35 @@ impl Heel {
 #[derive(Clone)]
 pub struct RoadData {
     track_length : f32,
-    start_offset : f32,
-    curvatures : Vec<CurvatureSegment>,
+    start_distance : f32,
+    curved_segments : Vec<CurvedSegment>,
+    straight_segments : Vec<StraightSegment>,
     heels : Vec<Heel>
 }
 
 impl RoadData {
-    pub fn new(start_offset : f32, length : f32, curvatures : Vec<CurvatureSegment>, heels : Vec<Heel>) -> RoadData {
-        RoadData { track_length : length, start_offset, curvatures, heels }
+    pub fn new(start_distance : f32, length : f32, curved_segments : Vec<CurvedSegment>, straight_segments : Vec<StraightSegment>, heels : Vec<Heel>) -> RoadData {
+        RoadData { track_length : length, start_distance, curved_segments, straight_segments, heels }
     }
 
-    pub fn get_norm_segment_offset(&self, prev_segment_offset : f32, curr_segment_start : f32) -> f32 {
-        let seg_start_norm = curr_segment_start - self.start_offset;
-
-        let mut curr_curvature = 0.0;
-
-        for curvature_seg in &self.curvatures {
-            if seg_start_norm > curvature_seg.start && seg_start_norm < curvature_seg.end { 
-                curr_curvature = curvature_seg.curvature;
-                break;
-            };
+    pub fn get_norm_segment_offset(&self, road_distance : f32) -> f32 {
+        for curved_seg in &self.curved_segments {
+            if let Some(offset) = curved_seg.get_offset(road_distance) {
+                return offset;
+            }
         }
 
-        curr_curvature + prev_segment_offset
+        for straight_seg in &self.straight_segments {
+            if let Some(offset) = straight_seg.get_offset(road_distance) {
+                return offset;
+            }
+        }
+
+        0.0
     }
 
     pub fn get_hill_width_multiplier_delta(&self, vis_road_dist : f32) -> f32 {
-        let vis_road_dist_norm = vis_road_dist - self.start_offset;
+        let vis_road_dist_norm = vis_road_dist - self.start_distance;
 
         for heel in &self.heels {
             if vis_road_dist_norm > heel.start && vis_road_dist_norm < heel.end {
@@ -69,7 +107,7 @@ impl RoadData {
     }
 
     pub fn is_visible(&self, vis_road_dist : f32) -> bool {
-        vis_road_dist >= self.start_offset && vis_road_dist <= self.start_offset + self.track_length
+        vis_road_dist >= self.start_distance && vis_road_dist <= self.start_distance + self.track_length
     }
 
     pub fn get_camera_pitch_delta(&self, camera_road_dist : f32) -> f32 {

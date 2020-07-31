@@ -187,10 +187,5 @@ impl UIScreen for MapScreen {
             self.city_selection_sprite.as_ref().height() as isize) / 2;
         let selection_mark_pos = &(&map_left_bottom + &self.selection_mark_pos) - &selection_mark_half_size;
         ImageOps::overlay_rgba(buffer, self.city_selection_sprite.as_ref(), &selection_mark_pos);
-
-        //let half_city_sprite_size = &IVec2::new(self.city_sprite.width() as isize, self.city_sprite.height() as isize) / 2;
-        //for city_position in &self.city_positions { 
-        //    ImageOps::overlay_rgba(buffer, &self.city_sprite, &(&(city_position + &left_bottom) - &half_city_sprite_size)); 
-        //}
     }
 }

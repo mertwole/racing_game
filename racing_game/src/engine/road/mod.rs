@@ -39,10 +39,6 @@ impl Road {
     }
 
     pub fn compute_y_data(&mut self, camera : &Camera, frame_height : u32) {
-        let mut prev_y_vis_road_dist = 0.0;
-        let mut prev_segment_offset = 0.0;
-        let mut norm_road_offset = 0.0;
-
         let mut hill_width_multiplier = 1.0;
         self.y_data.clear();
 
@@ -64,15 +60,8 @@ impl Road {
             }
 
             // Horizontal offset.
-            if prev_y_vis_road_dist != 0.0 { 
-                let segment_length = vis_road_dist - prev_y_vis_road_dist;
-
-                let norm_segment_offset = self.data.get_norm_segment_offset(prev_segment_offset, vis_road_dist + camera.road_distance);
-                norm_road_offset += norm_segment_offset * segment_length;
-                prev_segment_offset = norm_segment_offset;
-            }
- 
-            prev_y_vis_road_dist = vis_road_dist;
+            let norm_segment_offset = self.data.get_norm_segment_offset(vis_road_dist + camera.road_distance);
+            let norm_road_offset = norm_segment_offset * camera.screen_dist / vis_road_dist;
 
             // Hills.
             hill_width_multiplier += self.data.get_hill_width_multiplier_delta(vis_road_dist + camera.road_distance);
