@@ -12,18 +12,19 @@ use crate::engine::input::*;
 use crate::engine::render::*;
 use crate::engine::window::*;
 use crate::engine::common::{IVec2};
+use crate::engine::ui::font::*;
 
 mod city_map;
 use city_map::*;
-
-mod ui_screen_manager;
-use ui_screen_manager::*;
 
 mod ride_manager;
 use ride_manager::*;
 
 mod car;
 use car::*;
+
+mod ui;
+use ui::*;
 
 pub const RESOURCES_DIR : Dir = include_dir!("./resources");
 
@@ -36,8 +37,8 @@ pub struct Game {
     input : Input<InputEvent>,
 
     pub city_map : CityMap,
+    ui : UI,
 
-    screen_manager : UIScreenManager,
     ride_manager : RideManager
 }
 
@@ -50,7 +51,8 @@ pub enum InputEvent{
     UIRight,
     UILeft,
     UIUp,
-    UIDown
+    UIDown,
+    UISelect
 }
 
 impl Game {
@@ -68,6 +70,7 @@ impl Game {
         input.bind_action(InputEvent::UIDown, Key::Down);
         input.bind_action(InputEvent::UILeft, Key::Left);
         input.bind_action(InputEvent::UIRight, Key::Right);
+        input.bind_action(InputEvent::UISelect, Key::Enter);
 
         let mut generation_rng = rand::rngs::StdRng::from_seed([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]);
         let parameters = city_map::GenerationParameters { 
@@ -76,16 +79,60 @@ impl Game {
             min_distance_between_cities : 50.0 
         };
         let city_map = CityMap::generate(&mut generation_rng, parameters);
-
-        let screen_manager = UIScreenManager::new(&IVec2::new(screen_width as isize, screen_height as isize));
-
+        
         let ride_manager = RideManager::new();
 
-        let game = Game { window, render, input, screen_width, screen_height, city_map, screen_manager, ride_manager };
+        let ui = UI::new(&IVec2::new(screen_width as isize, screen_height as isize));
 
-        game
+        Game { window, render, input, screen_width, screen_height, city_map, ride_manager, ui }
+    }
+}
+
+impl Game {
+    
+}
+
+// Game loop.
+impl Game {
+    pub fn enter_gameloop(&mut self) {
+        unsafe {
+            self.ui.set_game(Rc::from_raw(self as *const Game));
+        }
+
+        loop {
+            let delta_time = self.window.get_time();
+            self.window.set_time(0.0);
+            
+            //println!("FPS : {}", 1.0 / delta_time);
+
+            self.update(delta_time as f32);
+
+            let render_buffer = RgbImage::new(self.screen_width, self.screen_height);
+            if self.window.should_close() { break; }
+            self.render(render_buffer);
+        }
     }
 
+    fn update(&mut self, delta_time : f32) {
+        let input_queue = self.input.process(&mut self.window); 
+
+        self.ui.update(delta_time);
+        self.ride_manager.update(delta_time);
+
+        self.ride_manager.process_input(&input_queue);
+        self.ui.process_input(&input_queue);
+    }
+
+    fn render(&mut self, mut buffer : RgbImage) {
+        self.ride_manager.render(&mut buffer);
+        self.ui.render(&mut buffer);
+
+        self.render.render(&mut self.window, buffer);
+    }
+}
+
+// File loading.
+impl Game {
     pub fn load_image_rgb(name : &str) -> RgbImage {
         let file = RESOURCES_DIR.get_file(name);
         match file {
@@ -108,42 +155,5 @@ impl Game {
             Some(file) => { file.contents() } 
             None => { panic!("file {} not found!", name); }
         }
-    }
-
-    pub fn start_ride(&mut self, destination_city_id : usize) {
-
-    }
-
-    pub fn enter_gameloop(&mut self) {
-        unsafe { self.screen_manager.init(Rc::from_raw(self as *const Game)); }
-
-        loop {
-            let delta_time = self.window.get_time();
-            self.window.set_time(0.0);
-            
-            //println!("FPS : {}", 1.0 / delta_time);
-
-            self.update(delta_time as f32);
-
-            let render_buffer = RgbImage::new(self.screen_width, self.screen_height);
-            if self.window.should_close() { break; }
-            self.render(render_buffer);
-        }
-    }
-
-    fn update(&mut self, delta_time : f32) {
-        let input_queue = self.input.process(&mut self.window); 
-
-        self.ride_manager.update(delta_time as f32);
-
-        self.ride_manager.process_input(&input_queue);
-        //self.screen_manager.process_input(&input_queue);
-    }
-
-    fn render(&mut self, mut buffer : RgbImage) {
-        self.ride_manager.render(&mut buffer);
-        //self.screen_manager.render(&mut buffer);
-
-        self.render.render(&mut self.window, buffer);
     }
 }

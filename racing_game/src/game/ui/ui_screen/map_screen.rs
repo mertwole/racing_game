@@ -6,6 +6,7 @@ use crate::engine::common::{IVec2, ImageOps};
 use crate::engine::ui::font::*;
 use crate::engine::ui::{UIPage, UIText, UIImage, Pivot};
 use crate::game::{Game, InputEvent, EventType};
+use crate::game::ui::{UIEvent, Screen};
 
 use super::UIScreen;
 
@@ -17,11 +18,13 @@ pub struct MapScreen{
     city_sprite : RgbaImage,
     road_line_color : Rgb<u8>,
     road_line_width : u32,
+
+    start_ride_flag : bool
 }
 
 impl MapScreen {
     pub fn new(resolution : &IVec2, font : Rc<Font>) -> MapScreen {
-        let mut map_page = UIPage::new(resolution.clone(), Some(Rgb([100, 100, 100])));
+        let map_page = UIPage::new(resolution.clone(), Some(Rgb([100, 100, 100])));
 
         let city_sprite = Game::load_image_rgba("ending_city_selected.png");
 
@@ -31,7 +34,8 @@ impl MapScreen {
             city_sprite, 
             road_line_color : Rgb([0, 255, 0]), 
             road_line_width : 4, 
-            accesible_city_ids : Vec::new() 
+            accesible_city_ids : Vec::new(),
+            start_ride_flag : false
         }
     }
 }
@@ -41,8 +45,13 @@ impl UIScreen for MapScreen {
         self.accesible_city_ids = game.city_map.get_accesible_city_ids();
     }   
 
-    fn update(&mut self, game : &Game) {
+    fn update(&mut self, delta_time : f32) -> Vec<UIEvent>{
+        if self.start_ride_flag {
+            self.start_ride_flag = false;
+            return vec![UIEvent::StartRide, UIEvent::ChangeScreen(Screen::Game)];
+        }
 
+        Vec::new()
     }  
 
     fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
@@ -52,16 +61,17 @@ impl UIScreen for MapScreen {
                 (InputEvent::UIDown, EventType::Pressed) => {  }
                 (InputEvent::UILeft, EventType::Pressed) => {  }
                 (InputEvent::UIRight, EventType::Pressed) => {  }
+                (InputEvent::UISelect, EventType::Pressed) => { self.start_ride_flag = true; }
                 _ => { }
             }
         }
     }   
 
-    fn render(&self, game : &Game, buffer : &mut RgbImage) {
+    fn render(&self, buffer : &mut RgbImage) {
         self.page.draw(buffer);
 
         // Render map.
-        let map_size = game.city_map.size.clone();
+        /*let map_size = game.city_map.size.clone();
         let left_bottom = &self.map_center_pos - &(&map_size / 2); 
 
         for road in &game.city_map.roads { 
@@ -73,6 +83,6 @@ impl UIScreen for MapScreen {
         let half_city_sprite_size = &IVec2::new(self.city_sprite.width() as isize, self.city_sprite.height() as isize) / 2;
         for city in &game.city_map.cities { 
             ImageOps::overlay_rgba(buffer, &self.city_sprite, &(&(&city.position + &left_bottom) - &half_city_sprite_size)); 
-        }
+        }*/
     }
 }
