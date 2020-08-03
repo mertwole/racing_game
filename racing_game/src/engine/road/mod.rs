@@ -61,7 +61,7 @@ impl Road {
 
             // Horizontal offset.
             let norm_segment_offset = self.data.get_norm_segment_offset(vis_road_dist + camera.road_distance);
-            let norm_road_offset = norm_segment_offset * camera.screen_dist / vis_road_dist;
+            let norm_road_offset = (norm_segment_offset - camera.x_offset) * camera.screen_dist / vis_road_dist;
 
             // Hills.
             hill_width_multiplier += self.data.get_hill_width_multiplier_delta(vis_road_dist + camera.road_distance);

@@ -61,6 +61,14 @@ impl Heel {
     pub fn new(start : f32, end : f32, start_steepness : f32, end_steepness : f32) -> Heel {
         Heel { start, end, start_steepness, end_steepness }
     }
+
+    fn get_width_multiplier(&self, distance : f32) -> Option<f32> {
+        if distance < self.start || distance > self.end { return None; }
+
+        let lerp = (distance - self.start) / (self.end - self.start);
+        let lerp = lerp * lerp * (3.0 - 2.0 * lerp); // Smoothstep from glsl.
+        return Some(Math::lerp(self.start_steepness, self.end_steepness, lerp));
+    }
 }
 
 #[derive(Clone)]
@@ -93,13 +101,10 @@ impl RoadData {
         0.0
     }
 
-    pub fn get_hill_width_multiplier_delta(&self, vis_road_dist : f32) -> f32 {
-        let vis_road_dist_norm = vis_road_dist - self.start_distance;
-
+    pub fn get_hill_width_multiplier_delta(&self, road_distance : f32) -> f32 {
         for heel in &self.heels {
-            if vis_road_dist_norm > heel.start && vis_road_dist_norm < heel.end {
-                let steepness_t = (vis_road_dist_norm - heel.start) / (heel.end - heel.start);
-                return Math::lerp(heel.start_steepness, heel.end_steepness, steepness_t);
+            if let Some(mul) = heel.get_width_multiplier(road_distance) {
+                return mul;
             }
         }
         

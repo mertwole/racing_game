@@ -4,5 +4,6 @@ pub struct Camera{
     pub y_pos : f32,
     pub far_plane : f32,
     pub pitch : f32,
-    pub road_distance : f32
+    pub road_distance : f32,
+    pub x_offset : f32
 }

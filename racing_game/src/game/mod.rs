@@ -12,7 +12,6 @@ use crate::engine::input::*;
 use crate::engine::render::*;
 use crate::engine::window::*;
 use crate::engine::common::{IVec2};
-use crate::engine::ui::font::*;
 
 mod city_map;
 use city_map::*;
@@ -20,8 +19,8 @@ use city_map::*;
 mod ride;
 use ride::*;
 
-mod car;
-use car::*;
+mod player;
+use player::*;
 
 mod ui;
 use ui::*;
@@ -35,6 +34,8 @@ pub struct Game {
     window : Window,
     render : Render,
     input : Input<InputEvent>,
+
+    player : Player,
 
     pub city_map : CityMap,
     ui : UI,
@@ -55,6 +56,8 @@ pub enum InputEvent{
     UISelect
 }
 
+pub struct Percent(f32);
+
 impl Game {
     pub fn new() -> Game {
         let screen_width = 640;
@@ -65,6 +68,8 @@ impl Game {
 
         let mut input = Input::<InputEvent>::new();
         input.bind_action(InputEvent::Gas, Key::Up);
+        input.bind_action(InputEvent::Left, Key::Left);
+        input.bind_action(InputEvent::Right, Key::Right);
 
         input.bind_action(InputEvent::UIUp, Key::Up);
         input.bind_action(InputEvent::UIDown, Key::Down);
@@ -84,7 +89,9 @@ impl Game {
 
         let ui = UI::new(&IVec2::new(screen_width as isize, screen_height as isize));
 
-        Game { window, render, input, screen_width, screen_height, city_map, ride, ui }
+        let player = Player::new();
+
+        Game { window, render, input, screen_width, screen_height, city_map, ride, ui, player }
     }
 }
 

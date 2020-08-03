@@ -8,6 +8,9 @@ pub mod road_path;
 use city::*;
 use road_path::*;
 
+pub mod services;
+use services::*;
+
 pub struct GenerationParameters{
     pub city_count : u32,
     pub size : IVec2,
@@ -18,6 +21,7 @@ pub struct GenerationParameters{
 pub struct CityMap{
     pub cities : Vec<City>,
     pub roads : Vec<RoadPath>,
+    pub services : Services,
     pub size : IVec2,
     pub current_city_id : usize,
     current_destination_city_id : usize
@@ -72,14 +76,9 @@ impl CityMap {
          
     }
 
-    pub fn generate(rng : &mut StdRng, parameters : GenerationParameters) -> CityMap {
-        // 1. Generate random points in grid.
-        // 2. Connect all the points.
-        // 3. Remove intersecting(longest of the pair).
-        // 4. Remove random roads keeping graph coherency(it's better to remove roads among longest).
+    fn generate_city_positions(rng : &mut StdRng, parameters : &GenerationParameters) -> Vec<IVec2>{
         let mut city_positions : Vec<IVec2> = Vec::new();
 
-        // Fill city positions.
         let min_city_dist_sqr = parameters.min_distance_between_cities * parameters.min_distance_between_cities;
         for _i in 0..parameters.city_count {
             // Regenerate city while it is too close to another cities.
@@ -98,7 +97,10 @@ impl CityMap {
             }   
         }
 
-        // Select start and end cities.
+        city_positions
+    }   
+
+    fn select_ending_cities(city_positions : &Vec<IVec2>) -> (usize, usize) {
         let mut start_city_id = 0; // Left bottom city.
         let mut finish_city_id = 0; // Right top city.
         for i in 0..city_positions.len() {
@@ -111,10 +113,14 @@ impl CityMap {
             || (city_positions[i].x == city_positions[finish_city_id].x && city_positions[i].y > city_positions[finish_city_id].y) {
                 finish_city_id = i;
             }
-        }   
+        }
 
-        // First, all possible city pairs.
-        let mut roads : Vec<(usize, usize)> = Vec::with_capacity((city_positions.len() * (city_positions.len())) / 2);
+        (start_city_id, finish_city_id)
+    }
+
+    fn generate_all_valid_roads(city_positions : &Vec<IVec2>) -> Vec<(usize, usize)> {
+        // First, connect all possible city pairs.
+        let mut roads : Vec<(usize, usize)> = Vec::with_capacity((city_positions.len() * (city_positions.len() - 1)) / 2);
         for i in 0..city_positions.len() {
             for j in i + 1..city_positions.len() {
                 roads.push((i, j)); 
@@ -151,6 +157,10 @@ impl CityMap {
             }
         }
 
+        roads
+    }
+
+    fn remove_some_roads(roads : &mut Vec<(usize, usize)>, city_positions : &Vec<IVec2>, rng : &mut StdRng) {
         // Remove [remove_count] random roads among [removable_road_count] longest.
         let removable_road_count = roads.len() / 2;
         let unremovable_road_count = roads.len() - removable_road_count;
@@ -164,6 +174,13 @@ impl CityMap {
                 roads.insert(remove_id, removed_road);
             } else { removed += 1; }
         }     
+    }
+
+    pub fn generate(rng : &mut StdRng, parameters : GenerationParameters) -> CityMap {
+        let city_positions = Self::generate_city_positions(rng, &parameters);
+        let (start_city_id, finish_city_id) = Self::select_ending_cities(&city_positions);
+        let mut roads = Self::generate_all_valid_roads(&city_positions);
+        Self::remove_some_roads(&mut roads, &city_positions, rng);
 
         let mut roads : Vec<RoadPath> = roads.into_iter()
         .map(|road| RoadPath::new(road.0, road.1))
@@ -171,21 +188,23 @@ impl CityMap {
         
         let cities : Vec<City> = city_positions.into_iter()
         .enumerate()
-        .map(|(id, pos)| City { 
-            position : pos,  
-            description : if id == start_city_id { 
+        .map(|(id, pos)| City::new( 
+            pos,  
+            if id == start_city_id { 
                 CityDescription::Start 
             } else if id == finish_city_id { 
                 CityDescription::Finish 
             } else { 
                 CityDescription::Intermediate 
             }
-        })
+        ))
         .collect();
 
         for road in &mut roads{ road.generate(rng, 1.0); }
 
-        CityMap { cities, roads, size : parameters.size, current_city_id : start_city_id, current_destination_city_id : start_city_id }
+        let services = Services::generate(rng);
+
+        CityMap { cities, roads, services, size : parameters.size, current_city_id : start_city_id, current_destination_city_id : start_city_id }
     }
 
     pub fn arrived_to_city(&mut self) {
