@@ -4,7 +4,7 @@ use image::{RgbImage, RgbaImage, Rgb};
 
 use crate::engine::common::{IVec2, ImageOps};
 use crate::engine::ui::font::*;
-use crate::engine::ui::{UIPage, UIText, UIImage, Pivot};
+use crate::engine::ui::*;
 use crate::game::{Game, InputEvent, EventType};
 use crate::game::ui::{UIEvent, Screen};
 
@@ -17,8 +17,6 @@ pub struct ServicesScreen{
 impl ServicesScreen {
     pub fn new(resolution : &IVec2, font : Rc<Font>) -> ServicesScreen {
         let mut page = UIPage::new(resolution.clone(), Some(Rgb([100, 100, 100])));
-        let text = UIText::new(font, String::from("ABF"));
-        page.add_control(Box::from(text), Pivot::LeftBottom, IVec2::new(10, 10));
 
         ServicesScreen { page }
     }
@@ -31,7 +29,7 @@ impl UIScreen for ServicesScreen {
         self.page.clear_controls();
 
         let logo_img = Box::from(UIImage::new(services.gas_stations[0].logo.clone()));
-        self.page.add_control(logo_img, Pivot::Center, IVec2::new(300, 200));
+        self.page.add_control(logo_img, &ControlProperties { pivot : Pivot::RightTop, position : IVec2::new(0, 0), binding : Binding::RightTop});
     }   
 
     fn update(&mut self, delta_time : f32) -> Vec<UIEvent> {

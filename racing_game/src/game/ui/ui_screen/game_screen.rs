@@ -4,7 +4,7 @@ use image::{RgbImage, RgbaImage, Rgb};
 
 use crate::engine::common::{IVec2, ImageOps};
 use crate::engine::ui::font::*;
-use crate::engine::ui::{UIPage, UIText, UIImage, Pivot};
+use crate::engine::ui::*;
 use crate::game::{Game, InputEvent, EventType};
 use crate::game::ui::{UIEvent, Screen};
 
@@ -18,7 +18,7 @@ impl GameScreen {
     pub fn new(resolution : &IVec2, font : Rc<Font>) -> GameScreen {
         let mut game_page = UIPage::new(resolution.clone(), None);
         let text = UIText::new(font, String::from("ABF"));
-        game_page.add_control(Box::from(text), Pivot::LeftBottom, IVec2::new(10, 10));
+        game_page.add_control(Box::from(text), &ControlProperties { pivot : Pivot::LeftBottom, position : IVec2::new(10, 10), binding : Binding::LeftBottom } );
 
         GameScreen { page : game_page }
     }

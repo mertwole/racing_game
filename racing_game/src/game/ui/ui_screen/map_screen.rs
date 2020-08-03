@@ -4,7 +4,7 @@ use image::{RgbImage, RgbaImage, Rgb};
 
 use crate::engine::common::{IVec2, Vec2, ImageOps, Math};
 use crate::engine::ui::font::*;
-use crate::engine::ui::{UIPage, UIText, UIImage, Pivot};
+use crate::engine::ui::*;
 use crate::game::{Game, InputEvent, EventType, city_map::city::CityDescription};
 use crate::game::ui::{UIEvent, Screen};
 
@@ -129,7 +129,7 @@ impl UIScreen for MapScreen {
 
         for city_mark in &self.city_marks {
             let image = UIImage::new(if city_mark.ending { self.ending_city_sprite.clone() } else { self.intermediate_city_sprite.clone() });
-            self.page.add_control(Box::from(image), Pivot::Center, &city_mark.position + &map_left_bottom);
+            self.page.add_control(Box::from(image), &ControlProperties { pivot : Pivot::Center, position : &city_mark.position + &map_left_bottom, binding : Binding::LeftBottom });
         }
     }   
 
