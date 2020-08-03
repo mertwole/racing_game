@@ -1,7 +1,7 @@
 use image::{RgbImage, RgbaImage};
 
 use super::city_map::road_path::RoadPathMeta;
-use super::{Game, Percent};
+use super::{Game};
 use crate::engine::road::*;
 use crate::engine::horizon::*;
 use crate::engine::camera::*;
@@ -15,11 +15,6 @@ pub struct Car{
     max_speed : f32,
     steer_speed : f32,
     x_pos : f32,
-
-    pub oil_level : Percent,
-    pub gas_level : Percent,
-    pub damage : Percent,
-
     image : RgbaImage
 }
 
@@ -32,10 +27,6 @@ impl Car {
             max_speed,
             steer_speed,
             x_pos : 0.0,
-
-            oil_level : Percent(0.0),
-            gas_level : Percent(0.0),
-            damage : Percent(0.0),
 
             image
         }

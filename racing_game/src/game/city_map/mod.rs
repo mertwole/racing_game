@@ -182,13 +182,17 @@ impl CityMap {
         let mut roads = Self::generate_all_valid_roads(&city_positions);
         Self::remove_some_roads(&mut roads, &city_positions, rng);
 
+        let services = Services::generate(rng);
+        let service_subsets = services.generate_subsets(city_positions.len(), rng);
+
         let mut roads : Vec<RoadPath> = roads.into_iter()
         .map(|road| RoadPath::new(road.0, road.1))
         .collect();
         
         let cities : Vec<City> = city_positions.into_iter()
         .enumerate()
-        .map(|(id, pos)| City::new( 
+        .zip(service_subsets.into_iter())
+        .map(|((id, pos), services)| City::new( 
             pos,  
             if id == start_city_id { 
                 CityDescription::Start 
@@ -196,7 +200,8 @@ impl CityMap {
                 CityDescription::Finish 
             } else { 
                 CityDescription::Intermediate 
-            }
+            },
+            services
         ))
         .collect();
 
@@ -206,7 +211,9 @@ impl CityMap {
 
         CityMap { cities, roads, services, size : parameters.size, current_city_id : start_city_id, current_destination_city_id : start_city_id }
     }
+}
 
+impl CityMap {
     pub fn arrived_to_city(&mut self) {
         self.current_city_id = self.current_destination_city_id;
     }
@@ -255,5 +262,9 @@ impl CityMap {
         }
 
         panic!("incorrect road!");
+    }
+
+    pub fn get_current_city_services(&self) -> ServiceReferences {
+        self.services.get_subset_services(&self.cities[self.current_city_id].services)
     }
 }

@@ -41,6 +41,10 @@ impl UIPage {
         self.controls.push(control);
     }
     
+    pub fn clear_controls(&mut self) {
+        self.controls = Vec::new();
+    }
+
     pub fn draw(&self, buffer : &mut RgbImage) {
         match self.background_color {
             Some(color) => { 

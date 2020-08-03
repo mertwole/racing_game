@@ -125,6 +125,8 @@ impl UIScreen for MapScreen {
 
         let map_left_bottom = &self.map_center_pos - &(&self.map_size / 2);
 
+        self.page.clear_controls();
+
         for city_mark in &self.city_marks {
             let image = UIImage::new(if city_mark.ending { self.ending_city_sprite.clone() } else { self.intermediate_city_sprite.clone() });
             self.page.add_control(Box::from(image), Pivot::Center, &city_mark.position + &map_left_bottom);
