@@ -22,22 +22,22 @@ impl RoadPath {
     }
 
     pub fn generate(&mut self, rng : &mut StdRng, difficulty : f32) {
-        let straight_segments = vec![
-            StraightSegment::new(0.0, 20.0, 0.0),
-            StraightSegment::new(50.0, 100.0, 4.5),
-        ];
-
-        let curved_segments = vec![
-            CurvedSegment::new(20.0, 50.0, 0.0, 4.5),
+        let points = vec! [
+            RoadPoint::new(0.0, 0.0, 0.0),
+            //RoadPoint::new(10.0, 0.0, 0.0),
+            //RoadPoint::new(30.0, 1.0, 0.2),
+            //RoadPoint::new(35.0, 2.0, 0.2),
+            //RoadPoint::new(60.0, 3.0, 0.0),
+            RoadPoint::new(150.0, 0.0, 0.0)
         ];
 
         let heels = vec![
-            //Heel::new(0.0, 25.0, 0.0, 0.001),
-            //Heel::new(25.0, 75.0, 0.001, -0.001),
+            Heel::new(0.0, 50.0, 0.0, 0.003),
+            Heel::new(50.0, 100.0, 0.003, 0.0),
             //Heel::new(75.0, 100.0, -0.001, 0.0)
         ];
 
-        let road_data = RoadData::new(0.0, 100.0, curved_segments, straight_segments, heels);
+        let road_data = RoadData::new(0.0, 150.0, points, heels);
 
         let roads_data = vec![road_data];
         

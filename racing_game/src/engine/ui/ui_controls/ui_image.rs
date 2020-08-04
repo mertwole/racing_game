@@ -28,4 +28,8 @@ impl UIControl for UIImage {
     fn set_position(&mut self, position: IVec2) {
         self.position = position;
     }
+
+    fn get_position(&self) -> IVec2 {
+        self.position
+    }  
 }

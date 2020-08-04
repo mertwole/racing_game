@@ -26,7 +26,7 @@ pub enum Screen{
 pub fn create_all_screens(resolution : &IVec2) -> HashMap<Screen, Box<dyn UIScreen>>{
     let mut ui_screens = HashMap::<Screen, Box<dyn UIScreen>>::new();
 
-    let font = Font::new(Game::load_image_rgba("font.png"), IVec2::new(12, 12), String::from("ABCDEFGHIJ"));
+    let font = Font::new(Game::load_image_rgba("font.png"), IVec2::new(12, 12), String::from("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890$% "));
     let font = Rc::from(font);
 
     let map_screen = Box::from(MapScreen::new(resolution, font.clone()));

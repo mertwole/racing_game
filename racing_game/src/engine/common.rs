@@ -207,6 +207,11 @@ impl Math {
         a + (b - a) * t
     }
 
+    pub fn smoothstep(a : f32, b : f32, t : f32) -> f32 {
+        let lerp = t * t * (3.0 - 2.0 * t);
+        Self::lerp(a, b, lerp)
+    }
+
     pub fn sgn_isize(a : isize) -> isize {
         if a < 0 { -1 } else if a == 0 { 0 } else { 1 }
     } 
@@ -234,7 +239,7 @@ impl Geometry {
         true
     }
 
-    fn line_intersect(line_0 : &Line, line_1 : &Line) -> Vec2 {
+    pub fn line_intersect(line_0 : &Line, line_1 : &Line) -> Vec2 {
         // y1 = k1 * x + t1
         // y2 = k2 * x + t2
         // k1 * x + t1 = k2 * x + t2
@@ -452,6 +457,17 @@ impl IVec2{
 
     pub fn dot(&self, rhs : &IVec2) -> isize {
         self.x * rhs.x + self.y * rhs.y
+    }
+
+    pub fn lerp(a : &IVec2, b : &IVec2, t : f32) -> IVec2 {
+        let lerp = Vec2::new(
+            Math::lerp(a.x as f32, b.x as f32, t),
+            Math::lerp(a.y as f32, b.y as f32, t)
+        );
+        IVec2::new(
+            if (b.x - a.x) > 0 { lerp.x.ceil() } else { lerp.x.floor() } as isize,
+            if (b.y - a.y) > 0 { lerp.y.ceil() } else { lerp.y.floor() } as isize
+        )
     }
 }
 

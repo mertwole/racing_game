@@ -143,16 +143,8 @@ impl UIScreen for MapScreen {
             ];
         }
 
-        // Interpolate selection mark.
-        let dest_selection_mark_pos = self.city_marks[self.curr_selected_city_id].position;
-        let new_selection_mark_pos = Vec2::new(
-            Math::lerp(self.selection_mark_pos.x as f32, dest_selection_mark_pos.x as f32, 0.5),
-            Math::lerp(self.selection_mark_pos.y as f32, dest_selection_mark_pos.y as f32, 0.5)
-        );
-        self.selection_mark_pos = IVec2::new(
-            if (dest_selection_mark_pos.x - self.selection_mark_pos.x) > 0 { new_selection_mark_pos.x.ceil() } else { new_selection_mark_pos.x.floor() } as isize,
-            if (dest_selection_mark_pos.y - self.selection_mark_pos.y) > 0 { new_selection_mark_pos.y.ceil() } else { new_selection_mark_pos.y.floor() } as isize
-        );
+        // Move selection.
+        self.selection_mark_pos = IVec2::lerp(&self.selection_mark_pos, &self.city_marks[self.curr_selected_city_id].position, 0.5);
 
         Vec::new()
     }  

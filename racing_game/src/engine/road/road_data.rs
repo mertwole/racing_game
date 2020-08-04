@@ -1,53 +1,4 @@
-use super::Math;
-
-pub trait OffsetSegment {
-    fn get_offset(&self, distance : f32) -> Option<f32>;
-}
-
-#[derive(Clone)]
-pub struct CurvedSegment {
-    start : f32,
-    end : f32,
-    start_offset : f32,
-    end_offset : f32
-}
-
-impl CurvedSegment {
-    pub fn new(start : f32, end : f32, start_offset : f32, end_offset : f32) -> CurvedSegment {
-        CurvedSegment { start, end, start_offset, end_offset }
-    }
-}
-
-impl OffsetSegment for CurvedSegment {
-    fn get_offset(&self, distance : f32) -> Option<f32> {
-        if distance < self.start || distance > self.end { return None; }
-
-        let lerp = (distance - self.start) / (self.end - self.start);
-        let lerp = lerp * lerp * (3.0 - 2.0 * lerp); // Smoothstep from glsl.
-        return Some(Math::lerp(self.start_offset, self.end_offset, lerp));
-    }
-}
-
-#[derive(Clone)]
-pub struct StraightSegment{
-    start : f32,
-    end : f32,
-    offset : f32
-}
-
-impl StraightSegment {
-    pub fn new(start : f32, end : f32, offset : f32) -> StraightSegment {
-        StraightSegment { start, end, offset }
-    }
-}
-
-impl OffsetSegment for StraightSegment {
-    fn get_offset(&self, distance : f32) -> Option<f32> {
-        if distance < self.start || distance > self.end { return None; }
-        
-        return Some(self.offset);
-    }
-}
+use crate::engine::common::*;
 
 #[derive(Clone)]
 pub struct Heel{
@@ -65,9 +16,8 @@ impl Heel {
     fn get_width_multiplier(&self, distance : f32) -> Option<f32> {
         if distance < self.start || distance > self.end { return None; }
 
-        let lerp = (distance - self.start) / (self.end - self.start);
-        let lerp = lerp * lerp * (3.0 - 2.0 * lerp); // Smoothstep from glsl.
-        return Some(Math::lerp(self.start_steepness, self.end_steepness, lerp));
+        let t = (distance - self.start) / (self.end - self.start);
+        return Some(Math::lerp(self.start_steepness, self.end_steepness, t));
     }
 }
 
@@ -75,25 +25,58 @@ impl Heel {
 pub struct RoadData {
     track_length : f32,
     start_distance : f32,
-    curved_segments : Vec<CurvedSegment>,
-    straight_segments : Vec<StraightSegment>,
-    heels : Vec<Heel>
+    heels : Vec<Heel>,
+    points : Vec<RoadPoint>
+}
+
+#[derive(Clone)]
+pub struct RoadPoint {
+    road_distance : f32,
+    offset : f32,
+    angle : f32
+}
+
+impl RoadPoint {
+    pub fn new(road_distance : f32, offset : f32, angle : f32) -> RoadPoint {
+        RoadPoint { road_distance, offset, angle }
+    }
 }
 
 impl RoadData {
-    pub fn new(start_distance : f32, length : f32, curved_segments : Vec<CurvedSegment>, straight_segments : Vec<StraightSegment>, heels : Vec<Heel>) -> RoadData {
-        RoadData { track_length : length, start_distance, curved_segments, straight_segments, heels }
+    pub fn new(start_distance : f32, length : f32, road_points : Vec<RoadPoint>, heels : Vec<Heel>) -> RoadData {
+        RoadData { track_length : length, start_distance, heels, points : road_points }
     }
 
     pub fn get_norm_segment_offset(&self, road_distance : f32) -> f32 {
-        for curved_seg in &self.curved_segments {
-            if let Some(offset) = curved_seg.get_offset(road_distance) {
-                return offset;
-            }
-        }
+        for i in 0..self.points.len() {
+            if road_distance < self.points[i].road_distance {
+                let start_angle = self.points[i - 1].angle;
+                let end_angle = self.points[i].angle;
+                let start_distance = self.points[i - 1].road_distance;
+                let end_distance = self.points[i].road_distance;
+                let start_offset = self.points[i - 1].offset;
+                let end_offset = self.points[i].offset;
 
-        for straight_seg in &self.straight_segments {
-            if let Some(offset) = straight_seg.get_offset(road_distance) {
+                if start_angle == end_angle {
+                    let t = (road_distance - self.points[i - 1].road_distance) / (self.points[i].road_distance - self.points[i - 1].road_distance);
+                    return Math::lerp(start_offset, end_offset, t);
+                }
+
+                // Bezier curve.
+                let p0 = Vec2::new(start_distance, start_offset);
+                let p2 = Vec2::new(end_distance, end_offset);
+
+                let start_line = Line::new(p0.clone(), Vec2::new(1.0, start_angle));
+                let end_line = Line::new(p2.clone(), Vec2::new(1.0, end_angle));
+
+                let p1 = Geometry::line_intersect(&start_line, &end_line);
+                
+                let discr = 4.0 * (p1.x - p0.x) * (p1.x - p0.x) - 4.0 * (p0.x + p2.x - 2.0 * p1.x) * (p0.x - road_distance);
+                let t0 = (2.0 * (p0.x - p1.x) + discr.sqrt()) / (2.0 * (p0.x + p2.x - 2.0 * p1.x));
+                let t = if t0 > 0.0 && t0 < 1.0 { t0 } else { (2.0 * (p0.x - p1.x) - discr.sqrt()) / (2.0 * (p0.x + p2.x - 2.0 * p1.x)) };
+                
+                let offset = (1.0 - t) * (1.0 - t) * p0.y + 2.0 * t * (1.0 - t) * p1.y + t * t * p2.y;
+                
                 return offset;
             }
         }

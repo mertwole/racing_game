@@ -8,6 +8,8 @@ use ui_controls::UIControl;
 
 pub mod font;
 
+pub mod selector_menu;
+
 pub enum Pivot {
     Center,
     LeftBottom,
@@ -30,9 +32,10 @@ pub struct ControlProperties {
     pub position : IVec2
 }
 
+#[readonly::make]
 pub struct UIPage{
     controls : Vec<Box<dyn UIControl>>,
-    resolution : IVec2,
+    pub resolution : IVec2,
     background_color : Option<Rgb<u8>>
 }
 
