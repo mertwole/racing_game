@@ -40,7 +40,7 @@ pub struct Game {
     pub city_map : CityMap,
     ui : UI,
 
-    ride : Ride
+    ride : Ride 
 }
 
 #[derive(Copy, Clone)]
@@ -78,6 +78,7 @@ impl Game {
         input.bind_action(InputEvent::UIRight, Key::Right);
         input.bind_action(InputEvent::UISelect, Key::Enter);
 
+
         let mut generation_rng = rand::rngs::StdRng::from_seed([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]);
         let parameters = city_map::GenerationParameters { 
             city_count : 9, 
@@ -108,7 +109,7 @@ impl Game {
             self.window.set_time(0.0);
             
             //println!("FPS : {}", 1.0 / delta_time);
-
+            
             self.update(delta_time as f32);
 
             let render_buffer = RgbImage::new(self.screen_width, self.screen_height);
@@ -132,6 +133,9 @@ impl Game {
                 }
                 UIEvent::ChangePlayer(player) => {
                     self.player = player;
+                }
+                UIEvent::ServiceAction(action) => {
+                    self.city_map.process_service_action(action, &mut self.player); 
                 }
                 _ => { }
             } 

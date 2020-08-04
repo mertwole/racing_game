@@ -1,6 +1,6 @@
 use rand::{RngCore, rngs::StdRng};
 
-use crate::Game;
+use crate::{Game, game::player::Player};
 
 mod gas_station;
 mod hostel;
@@ -11,6 +11,10 @@ pub use gas_station::*;
 pub use hostel::*;
 pub use repair_station::*;
 pub use shop::*;
+
+pub enum ServiceAction{
+    BuyGas(u32)
+}
 
 pub struct CityServicesSubset {
     gas_station_ids : Vec<usize>,
@@ -76,4 +80,10 @@ impl Services {
             shops : Vec::new()
         }
     }
+
+    pub fn process_action(&mut self, action : ServiceAction, player : &mut Player) {
+        match action {
+            ServiceAction::BuyGas(amount) => { self.gas_stations[0].buy_gas(amount, player); }
+        }
+    }   
 }

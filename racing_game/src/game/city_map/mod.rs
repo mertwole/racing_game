@@ -1,6 +1,7 @@
 use rand::{RngCore, rngs::StdRng};
 
 use crate::engine::common::{IVec2, LineSegment, Geometry};
+use crate::game::player::Player;
 
 pub mod city;
 pub mod road_path;
@@ -266,5 +267,9 @@ impl CityMap {
 
     pub fn get_current_city_services(&self) -> ServiceReferences {
         self.services.get_subset_services(&self.cities[self.current_city_id].services)
+    }
+
+    pub fn process_service_action(&mut self, action : ServiceAction, player : &mut Player) {
+        self.services.process_action(action, player);
     }
 }

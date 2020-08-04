@@ -7,6 +7,7 @@ use crate::engine::ui::font::*;
 use crate::engine::ui::*;
 use crate::engine::ui::selector_menu::*;
 use crate::game::*;
+use crate::game::city_map::services::ServiceAction;
 use crate::game::ui::{UIEvent, Screen};
 
 use super::UIScreen;
@@ -54,12 +55,6 @@ impl GasStationsScreen {
 
         GasStationsScreen { menu, menu_item_selected : false, player : None }
     }
-
-    fn refuel(&mut self) {
-        let player = self.player.as_mut().unwrap();
-        player.money -= 1;
-        player.gas_level = Percent(100.0);
-    }
 }
 
 impl UIScreen for GasStationsScreen {
@@ -73,8 +68,7 @@ impl UIScreen for GasStationsScreen {
             let menu_event = self.menu.select_current();
             match menu_event {
                 MenuEvents::Refuel => { 
-                    self.refuel();
-                    return vec![UIEvent::ChangePlayer(self.player.clone().unwrap())]; 
+                    return vec![UIEvent::ServiceAction(ServiceAction::BuyGas(1))]; 
                 },
                 MenuEvents::Back => { return vec![UIEvent::ChangeScreen(Screen::Services)]; } 
             }

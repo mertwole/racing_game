@@ -3,6 +3,8 @@ use std::rc::Rc;
 use rand::{Rng, rngs::StdRng};
 use image::{RgbaImage};
 
+use crate::game::{Percent, player::Player};
+
 pub struct GasStation {
     pub logo : Rc<RgbaImage>,
     pub gas_cost : u32
@@ -11,13 +13,11 @@ pub struct GasStation {
 impl GasStation {
     pub fn generate(logo : RgbaImage, rng : &mut StdRng) -> GasStation {
         let gas_cost = rng.gen_range(5, 15);
-        GasStation { logo : Rc::from(logo) , gas_cost }
+        GasStation { logo : Rc::from(logo), gas_cost }
     }
 
-    pub fn buy_gas(&mut self, amount : u32, money : &mut u32) -> bool {
-        let cost = self.gas_cost * amount;
-        if cost > *money { return false; }
-        *money -= cost;
-        true
+    pub fn buy_gas(&mut self, amount : u32, player : &mut Player) {
+        player.money -= 1;
+        player.gas_level = Percent(100.0);
     }
 }

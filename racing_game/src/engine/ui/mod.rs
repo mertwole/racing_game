@@ -123,14 +123,14 @@ impl ModalPage {
 
     pub fn draw(&self, buffer : &mut RgbImage) {
         match self.background_color {
-            Some(color) => { 
+            Some(color) => {
                 for x in self.position.x..self.position.x + self.curr_size.x {
                     for y in self.position.y..self.position.y + self.curr_size.y {
                         buffer.put_pixel(x as u32, y as u32, color);
                     }
-                } 
+                }
             }
-            _ => { } 
+            _ => { }
         }
 
         if !self.animating {
