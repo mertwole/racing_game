@@ -88,20 +88,35 @@ impl UIPage {
     }
 }
 
+#[readonly::make]
 pub struct ModalPage {
     page : UIPage,
     position : IVec2,
     size : IVec2,
-    background_color : Option<Rgb<u8>>
+    curr_size : IVec2,
+    background_color : Option<Rgb<u8>>,
+    unfold_speed : f32,
+    pub animating : bool
 }
 
 impl ModalPage {
-    pub fn new(position : IVec2, size : IVec2, background_color : Option<Rgb<u8>>) -> ModalPage{
+    pub fn new(position : IVec2, size : IVec2, unfold_speed : f32, background_color : Option<Rgb<u8>>) -> ModalPage{
         let page = UIPage::new(size.clone(), None);
-        ModalPage { page, position, size, background_color }
+        ModalPage { page, position, size, curr_size : IVec2::new(0, size.y), background_color, unfold_speed, animating : true }
     }
 
-    pub fn add_control(&mut self, mut control : Box<dyn UIControl>, mut properties : ControlProperties) {
+    pub fn update(&mut self, delta_time : f32) {
+        if !self.animating { return; }
+
+        let unfold_delta = self.unfold_speed * delta_time;
+        self.curr_size.x = self.curr_size.x + unfold_delta.ceil() as isize;
+        if self.curr_size.x >= self.size.x {
+            self.curr_size.x = self.size.x;
+            self.animating = false;
+        }
+    }   
+
+    pub fn add_control(&mut self, control : Box<dyn UIControl>, mut properties : ControlProperties) {
         properties.position = &properties.position + &self.position;
         self.page.add_control(control, &properties);
     }
@@ -109,14 +124,17 @@ impl ModalPage {
     pub fn draw(&self, buffer : &mut RgbImage) {
         match self.background_color {
             Some(color) => { 
-                for x in self.position.x..self.position.x + self.size.x {
-                    for y in self.position.y..self.position.y + self.size.y {
+                for x in self.position.x..self.position.x + self.curr_size.x {
+                    for y in self.position.y..self.position.y + self.curr_size.y {
                         buffer.put_pixel(x as u32, y as u32, color);
                     }
                 } 
             }
             _ => { } 
         }
-        self.page.draw(buffer);
+
+        if !self.animating {
+            self.page.draw(buffer);
+        }
     }
 }
