@@ -4,7 +4,7 @@ use std::rc::Rc;
 use image::RgbImage;
 
 use crate::engine::common::IVec2;
-use super::{Game, EventType, InputEvent};
+use super::{Game, EventType, InputEvent, Player};
 
 mod ui_screen;
 use ui_screen::*;
@@ -12,6 +12,7 @@ use ui_screen::*;
 pub enum UIEvent{
     StartRide,
     SelectCityDestination(usize),
+    ChangePlayer(Player),
     ChangeScreen(Screen)
 }
 

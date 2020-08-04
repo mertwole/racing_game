@@ -56,6 +56,7 @@ pub enum InputEvent{
     UISelect
 }
 
+#[derive(Clone)]
 pub struct Percent(f32);
 
 impl Game {
@@ -128,6 +129,9 @@ impl Game {
                 }
                 UIEvent::SelectCityDestination(destination) => {
                     self.city_map.set_city_destination(destination);
+                }
+                UIEvent::ChangePlayer(player) => {
+                    self.player = player;
                 }
                 _ => { }
             } 

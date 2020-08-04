@@ -6,67 +6,77 @@ use crate::engine::common::{IVec2, ImageOps};
 use crate::engine::ui::font::*;
 use crate::engine::ui::*;
 use crate::engine::ui::selector_menu::*;
-use crate::game::{Game, InputEvent, EventType};
+use crate::game::*;
 use crate::game::ui::{UIEvent, Screen};
 
 use super::UIScreen;
 
 #[derive(Copy, Clone)]
 enum MenuEvents {
-    GasStations,
-    Next
+    Refuel,
+    Back
 }
 
-pub struct ServicesScreen{
+pub struct GasStationsScreen{
     menu : SelectorMenu<MenuEvents>,
-    menu_item_selected : bool
+    menu_item_selected : bool,
+    player : Option<Player>
 }
 
-impl ServicesScreen {
-    pub fn new(resolution : &IVec2, font : Rc<Font>) -> ServicesScreen {
+impl GasStationsScreen {
+    pub fn new(resolution : &IVec2, font : Rc<Font>) -> GasStationsScreen {
         let pointer_image = Game::load_image_rgba("ui/pointer.png");
 
-        let gas_stations_label = UIText::new(font.clone(), String::from("GAS STATIONS"));
-        let next_label = UIText::new(font.clone(), String::from("NEXT"));
+        let gas_stations_label = UIText::new(font.clone(), String::from("REFUEL"));
+        let next_label = UIText::new(font.clone(), String::from("BACK"));
 
-        let gas_stations_item = MenuItem::new(
+        let refuel_item = MenuItem::new(
             Box::from(gas_stations_label), 
             ControlProperties { 
                 pivot : Pivot::LeftTop, 
                 position : IVec2::new(20, -20), 
                 binding : Binding::LeftTop 
             }, 
-            MenuEvents::GasStations
+            MenuEvents::Refuel
         );
 
-        let next_item = MenuItem::new(
+        let back_item = MenuItem::new(
             Box::from(next_label), 
             ControlProperties { 
                 pivot : Pivot::LeftBottom, 
                 position : IVec2::new(20, 20), 
                 binding : Binding::LeftBottom 
             }, 
-            MenuEvents::Next
+            MenuEvents::Back
         );
 
-        let menu = SelectorMenu::new(vec![gas_stations_item, next_item], pointer_image, resolution.clone());
+        let menu = SelectorMenu::new(vec![refuel_item, back_item], pointer_image, resolution.clone());
 
-        ServicesScreen { menu, menu_item_selected : false }
+        GasStationsScreen { menu, menu_item_selected : false, player : None }
+    }
+
+    fn refuel(&mut self) {
+        let player = self.player.as_mut().unwrap();
+        player.money -= 1;
+        player.gas_level = Percent(100.0);
     }
 }
 
-impl UIScreen for ServicesScreen {
+impl UIScreen for GasStationsScreen {
     fn init(&mut self, game : &Game) {
-
-    }   
+        self.player = Some(game.player.clone());
+    }
 
     fn update(&mut self, delta_time : f32) -> Vec<UIEvent> {
         if self.menu_item_selected {
             self.menu_item_selected = false;
             let menu_event = self.menu.select_current();
             match menu_event {
-                MenuEvents::GasStations => { return vec![UIEvent::ChangeScreen(Screen::GasStations)]; },
-                MenuEvents::Next => { return vec![UIEvent::ChangeScreen(Screen::Map)]; } 
+                MenuEvents::Refuel => { 
+                    self.refuel();
+                    return vec![UIEvent::ChangePlayer(self.player.clone().unwrap())]; 
+                },
+                MenuEvents::Back => { return vec![UIEvent::ChangeScreen(Screen::Services)]; } 
             }
         }
 

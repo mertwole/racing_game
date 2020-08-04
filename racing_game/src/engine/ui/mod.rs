@@ -87,3 +87,36 @@ impl UIPage {
         for control in &self.controls{ control.as_ref().draw(buffer); }
     }
 }
+
+pub struct ModalPage {
+    page : UIPage,
+    position : IVec2,
+    size : IVec2,
+    background_color : Option<Rgb<u8>>
+}
+
+impl ModalPage {
+    pub fn new(position : IVec2, size : IVec2, background_color : Option<Rgb<u8>>) -> ModalPage{
+        let page = UIPage::new(size.clone(), None);
+        ModalPage { page, position, size, background_color }
+    }
+
+    pub fn add_control(&mut self, mut control : Box<dyn UIControl>, mut properties : ControlProperties) {
+        properties.position = &properties.position + &self.position;
+        self.page.add_control(control, &properties);
+    }
+
+    pub fn draw(&self, buffer : &mut RgbImage) {
+        match self.background_color {
+            Some(color) => { 
+                for x in self.position.x..self.position.x + self.size.x {
+                    for y in self.position.y..self.position.y + self.size.y {
+                        buffer.put_pixel(x as u32, y as u32, color);
+                    }
+                } 
+            }
+            _ => { } 
+        }
+        self.page.draw(buffer);
+    }
+}

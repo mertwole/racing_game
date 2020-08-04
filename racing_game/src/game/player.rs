@@ -1,7 +1,6 @@
-use crate::image::{RgbaImage, RgbImage};
-use crate::engine::common::{IVec2, ImageOps};
 use crate::game::{Percent};
 
+#[derive(Clone)]
 pub struct Player {
     pub money : u32,
     pub hunger : Percent,
