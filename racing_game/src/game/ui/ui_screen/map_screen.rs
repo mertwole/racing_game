@@ -24,9 +24,7 @@ pub struct MapScreen{
     road_marks : Vec<RoadMark>,
 
     curr_selected_city_id : usize,
-    selection_mark_pos : IVec2,
-
-    start_ride_flag : bool
+    selection_mark_pos : IVec2
 }
 
 struct CityMark {
@@ -71,9 +69,7 @@ impl MapScreen {
             road_marks : Vec::new(),
 
             curr_selected_city_id : 0,
-            selection_mark_pos : IVec2::zero(),
-
-            start_ride_flag : false,
+            selection_mark_pos : IVec2::zero()
         }
     }
 
@@ -133,23 +129,7 @@ impl UIScreen for MapScreen {
         }
     }   
 
-    fn update(&mut self, delta_time : f32) -> Vec<UIEvent>{
-        if self.start_ride_flag {
-            self.start_ride_flag = false;
-            return vec![
-                UIEvent::SelectCityDestination(self.curr_selected_city_id),
-                UIEvent::StartRide, 
-                UIEvent::ChangeScreen(Screen::Game)
-            ];
-        }
-
-        // Move selection.
-        self.selection_mark_pos = IVec2::lerp(&self.selection_mark_pos, &self.city_marks[self.curr_selected_city_id].position, 0.5);
-
-        Vec::new()
-    }  
-
-    fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
+    fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent>{
         for (event, event_type) in input {
             match (event, event_type) {
                 (InputEvent::UIUp, EventType::Pressed) => { self.change_selected_city(&IVec2::new(0, 1)); }
@@ -157,10 +137,21 @@ impl UIScreen for MapScreen {
                 (InputEvent::UILeft, EventType::Pressed) => { self.change_selected_city(&IVec2::new(-1, 0)); }
                 (InputEvent::UIRight, EventType::Pressed) => { self.change_selected_city(&IVec2::new(1, 0)); }
 
-                (InputEvent::UISelect, EventType::Pressed) => { self.start_ride_flag = true; }
+                (InputEvent::UISelect, EventType::Pressed) => { 
+                    return vec![
+                        UIEvent::SelectCityDestination(self.curr_selected_city_id),
+                        UIEvent::StartRide, 
+                        UIEvent::ChangeScreen(Screen::Game)
+                    ]; 
+                }
                 _ => { }
             }
         }
+
+        // Move selection.
+        self.selection_mark_pos = IVec2::lerp(&self.selection_mark_pos, &self.city_marks[self.curr_selected_city_id].position, 0.5);
+
+        Vec::new()
     }   
 
     fn render(&self, buffer : &mut RgbImage) {

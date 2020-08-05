@@ -16,6 +16,10 @@ impl GasStation {
         GasStation { logo : Rc::from(logo), gas_cost }
     }
 
+    pub fn get_cost(&self, amount : u32) -> f32 {
+        return self.gas_cost * amount as f32;
+    }
+
     pub fn buy_gas(&mut self, amount : u32, player : &mut Player) {
         player.money -= self.gas_cost * amount as f32;
         player.gas_level += amount;

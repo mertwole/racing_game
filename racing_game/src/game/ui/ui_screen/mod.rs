@@ -46,8 +46,7 @@ pub fn create_all_screens(resolution : &IVec2) -> HashMap<Screen, Box<dyn UIScre
 }
 
 pub trait UIScreen {
-    fn update(&mut self, delta_time : f32) -> Vec<UIEvent>;
+    fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent>;
     fn init(&mut self, game : &Game);
-    fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>);
     fn render(&self, buffer : &mut RgbImage);
 }

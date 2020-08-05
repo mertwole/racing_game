@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use image::{RgbImage, RgbaImage, Rgb};
 
-use crate::engine::common::{IVec2, ImageOps};
+use crate::engine::common::{IVec2};
 use crate::engine::ui::font::*;
 use crate::engine::ui::*;
 use crate::engine::ui::selector_menu::*;
@@ -18,11 +18,21 @@ enum MenuEvents {
     Back
 }
 
+enum State{
+    SelectingGasStation,
+    OpeningModalWindow,
+    ByingGas,
+    ClosingModalWindow
+}
+
 pub struct GasStationsScreen{
     menu : SelectorMenu<MenuEvents>,
-    menu_item_selected : bool,
+    buy_gas_modal : ModalPage,
     player : Option<Player>,
-    gas_stations : Vec<ServiceId>
+    gas_stations : Vec<ServiceId>,
+    state : State,
+    buy_gas_amount : u32,
+    font : Rc<Font>
 }
 
 impl GasStationsScreen {
@@ -54,7 +64,24 @@ impl GasStationsScreen {
 
         let menu = SelectorMenu::new(vec![refuel_item, back_item], pointer_image, resolution.clone());
 
-        GasStationsScreen { menu, menu_item_selected : false, player : None, gas_stations : Vec::new() }
+        let buy_gas_modal = ModalPage::new(IVec2::new(100, 100), IVec2::new(200, 100), Some(Rgb([150, 150, 150])));
+
+        GasStationsScreen { 
+            menu, 
+            player : None, 
+            gas_stations : Vec::new(), 
+            buy_gas_modal, 
+            state : State::SelectingGasStation, 
+            buy_gas_amount : 0, 
+            font : font.clone() 
+        }
+    }
+
+    fn referesh_modal(&mut self) {
+        self.buy_gas_modal.clear_controls();
+        let text = UIText::new(self.font.clone(), self.buy_gas_amount.to_string());
+        let mut text_props = ControlProperties { binding : Binding::Center, pivot : Pivot::Center, position : IVec2::zero() };
+        self.buy_gas_modal.add_control(Box::from(text), text_props);
     }
 }
 
@@ -65,35 +92,76 @@ impl UIScreen for GasStationsScreen {
         .iter()
         .map(|gs| gs.0)
         .collect();
+
+        self.referesh_modal();
     }
 
-    fn update(&mut self, delta_time : f32) -> Vec<UIEvent> {
-        if self.menu_item_selected {
-            self.menu_item_selected = false;
-            let menu_event = self.menu.select_current();
-            match menu_event {
-                MenuEvents::Refuel => { 
-                    return vec![UIEvent::ServiceAction(ServiceAction::BuyGas(1, self.gas_stations[0]))]; 
-                },
-                MenuEvents::Back => { return vec![UIEvent::ChangeScreen(Screen::Services)]; } 
+    fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
+        self.buy_gas_modal.update(delta_time);
+
+        match self.state {
+            State::SelectingGasStation => {
+
+                for (event, event_type) in input {
+                    match (event, event_type) {
+                        (InputEvent::UIDown, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, -1)); }
+                        (InputEvent::UIUp, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, 1)); }
+                        (InputEvent::UISelect, EventType::Pressed) => { 
+                            let menu_event = self.menu.select_current();
+                            match menu_event {
+                                MenuEvents::Refuel => { 
+                                    self.buy_gas_modal.start_anim_unfold(100.0);
+                                    self.state = State::OpeningModalWindow;
+                                },
+                                MenuEvents::Back => { 
+                                    return vec![UIEvent::ChangeScreen(Screen::Services)]; 
+                                } 
+                            }
+                        }
+                        _ => { }
+                    }
+                }
+
             }
+            State::ByingGas => {
+
+                for (event, event_type) in input {
+                    match (event, event_type) {
+                        (InputEvent::UIDown, EventType::Pressed) => { 
+                            if self.buy_gas_amount >= 1 { 
+                                self.buy_gas_amount -= 1; self.referesh_modal(); 
+                            } 
+                        }
+                        (InputEvent::UIUp, EventType::Pressed) => { 
+                            self.buy_gas_amount += 1; 
+                            self.referesh_modal();
+                        }
+                        (InputEvent::UISelect, EventType::Pressed) => { 
+                            return vec![UIEvent::ServiceAction(ServiceAction::BuyGas(self.buy_gas_amount, self.gas_stations[0]))]; 
+                        }
+                        (InputEvent::UIBack, EventType::Pressed) => { 
+                            self.buy_gas_modal.start_anim_fold(100.0);
+                            self.state = State::ClosingModalWindow;
+                        }
+                        _ => { }
+                    }
+                }
+            }
+            State::OpeningModalWindow => {
+                if self.buy_gas_modal.anim_state == ModalAnim::Void { self.state = State::ByingGas; }
+            }
+            State::ClosingModalWindow => {
+                if self.buy_gas_modal.anim_state == ModalAnim::Void { self.state = State::SelectingGasStation; }
+            }
+
+            _ => { }
         }
 
         Vec::new()
     }  
 
-    fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
-        for (event, event_type) in input {
-            match (event, event_type) {
-                (InputEvent::UIDown, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, -1)); }
-                (InputEvent::UIUp, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, 1)); }
-                (InputEvent::UISelect, EventType::Pressed) => { self.menu_item_selected = true; }
-                _ => { }
-            }
-        }
-    }   
-
     fn render(&self, buffer : &mut RgbImage) {
         self.menu.render(buffer);
+        self.buy_gas_modal.draw(buffer);
     }
 }

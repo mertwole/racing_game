@@ -18,8 +18,7 @@ enum MenuEvents {
 }
 
 pub struct ServicesScreen{
-    menu : SelectorMenu<MenuEvents>,
-    menu_item_selected : bool
+    menu : SelectorMenu<MenuEvents>
 }
 
 impl ServicesScreen {
@@ -51,7 +50,7 @@ impl ServicesScreen {
 
         let menu = SelectorMenu::new(vec![gas_stations_item, next_item], pointer_image, resolution.clone());
 
-        ServicesScreen { menu, menu_item_selected : false }
+        ServicesScreen { menu }
     }
 }
 
@@ -60,29 +59,24 @@ impl UIScreen for ServicesScreen {
 
     }   
 
-    fn update(&mut self, delta_time : f32) -> Vec<UIEvent> {
-        if self.menu_item_selected {
-            self.menu_item_selected = false;
-            let menu_event = self.menu.select_current();
-            match menu_event {
-                MenuEvents::GasStations => { return vec![UIEvent::ChangeScreen(Screen::GasStations)]; },
-                MenuEvents::Next => { return vec![UIEvent::ChangeScreen(Screen::Map)]; } 
-            }
-        }
-
-        Vec::new()
-    }  
-
-    fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
+    fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
         for (event, event_type) in input {
             match (event, event_type) {
                 (InputEvent::UIDown, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, -1)); }
                 (InputEvent::UIUp, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, 1)); }
-                (InputEvent::UISelect, EventType::Pressed) => { self.menu_item_selected = true; }
+                (InputEvent::UISelect, EventType::Pressed) => { 
+                    let menu_event = self.menu.select_current();
+                    match menu_event {
+                        MenuEvents::GasStations => { return vec![UIEvent::ChangeScreen(Screen::GasStations)]; },
+                        MenuEvents::Next => { return vec![UIEvent::ChangeScreen(Screen::Map)]; } 
+                    }
+                }
                 _ => { }
             }
         }
-    }   
+
+        Vec::new()
+    }
 
     fn render(&self, buffer : &mut RgbImage) {
         self.menu.render(buffer);

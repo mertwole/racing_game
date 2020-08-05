@@ -1,6 +1,6 @@
 use image::{RgbImage, Rgb};
 
-use super::common::{IVec2};
+use super::common::{IVec2, Vec2};
 
 mod ui_controls;
 pub use ui_controls::{UIImage, UIText};
@@ -88,31 +88,48 @@ impl UIPage {
     }
 }
 
+#[derive(PartialEq)]
+pub enum ModalAnim{
+    Unfold(f32),
+    Fold(f32),
+    Void
+}
+
 #[readonly::make]
 pub struct ModalPage {
     page : UIPage,
     position : IVec2,
     size : IVec2,
-    curr_size : IVec2,
+    curr_size : Vec2,
     background_color : Option<Rgb<u8>>,
-    unfold_speed : f32,
-    pub animating : bool
+    render_controls : bool,
+    pub anim_state : ModalAnim
 }
 
 impl ModalPage {
-    pub fn new(position : IVec2, size : IVec2, unfold_speed : f32, background_color : Option<Rgb<u8>>) -> ModalPage{
+    pub fn new(position : IVec2, size : IVec2, background_color : Option<Rgb<u8>>) -> ModalPage{
         let page = UIPage::new(size.clone(), None);
-        ModalPage { page, position, size, curr_size : IVec2::new(0, size.y), background_color, unfold_speed, animating : true }
+        ModalPage { page, position, size, curr_size : Vec2::new(0.0, size.y as f32), background_color, anim_state : ModalAnim::Void, render_controls : false }
     }
 
     pub fn update(&mut self, delta_time : f32) {
-        if !self.animating { return; }
-
-        let unfold_delta = self.unfold_speed * delta_time;
-        self.curr_size.x = self.curr_size.x + unfold_delta.ceil() as isize;
-        if self.curr_size.x >= self.size.x {
-            self.curr_size.x = self.size.x;
-            self.animating = false;
+        match self.anim_state {
+            ModalAnim::Fold(anim_speed) => {
+                self.curr_size.x = self.curr_size.x - anim_speed * delta_time;
+                if self.curr_size.x <= 0.0 {
+                    self.curr_size.x = 0.0;
+                    self.anim_state = ModalAnim::Void;
+                }
+            }
+            ModalAnim::Unfold(anim_speed) => {
+                self.curr_size.x = self.curr_size.x + anim_speed * delta_time;
+                if self.curr_size.x >= self.size.x as f32 {
+                    self.curr_size.x = self.size.x as f32;
+                    self.anim_state = ModalAnim::Void;
+                    self.render_controls = true;
+                }
+            }
+            ModalAnim::Void => { }
         }
     }   
 
@@ -121,11 +138,24 @@ impl ModalPage {
         self.page.add_control(control, &properties);
     }
 
+    pub fn clear_controls(&mut self) { 
+        self.page.clear_controls();
+    }
+
+    pub fn start_anim_unfold(&mut self, anim_speed : f32) {
+        self.anim_state = ModalAnim::Unfold(anim_speed);
+    }
+
+    pub fn start_anim_fold(&mut self, anim_speed : f32) {
+        self.anim_state = ModalAnim::Fold(anim_speed);
+        self.render_controls = false;
+    }   
+
     pub fn draw(&self, buffer : &mut RgbImage) {
         match self.background_color {
             Some(color) => {
-                for x in self.position.x..self.position.x + self.curr_size.x {
-                    for y in self.position.y..self.position.y + self.curr_size.y {
+                for x in self.position.x..self.position.x + self.curr_size.x as isize {
+                    for y in self.position.y..self.position.y + self.curr_size.y as isize {
                         buffer.put_pixel(x as u32, y as u32, color);
                     }
                 }
@@ -133,8 +163,6 @@ impl ModalPage {
             _ => { }
         }
 
-        if !self.animating {
-            self.page.draw(buffer);
-        }
+        if self.render_controls { self.page.draw(buffer); }
     }
 }

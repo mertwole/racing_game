@@ -53,7 +53,8 @@ pub enum InputEvent{
     UILeft,
     UIUp,
     UIDown,
-    UISelect
+    UISelect,
+    UIBack
 }
 
 #[derive(Clone)]
@@ -77,7 +78,7 @@ impl Game {
         input.bind_action(InputEvent::UILeft, Key::Left);
         input.bind_action(InputEvent::UIRight, Key::Right);
         input.bind_action(InputEvent::UISelect, Key::Enter);
-
+        input.bind_action(InputEvent::UIBack, Key::Backspace);
 
         let mut generation_rng = rand::rngs::StdRng::from_seed([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]);
         let parameters = city_map::GenerationParameters { 
@@ -121,7 +122,7 @@ impl Game {
     fn update(&mut self, delta_time : f32) {
         let input_queue = self.input.process(&mut self.window); 
 
-        let ui_events = self.ui.update(delta_time);
+        let ui_events = self.ui.update(&input_queue, delta_time);
 
         for event in ui_events {
             match event {
@@ -154,7 +155,6 @@ impl Game {
         }
 
         self.ride.process_input(&input_queue);
-        self.ui.process_input(&input_queue);
     }
 
     fn render(&mut self, mut buffer : RgbImage) {

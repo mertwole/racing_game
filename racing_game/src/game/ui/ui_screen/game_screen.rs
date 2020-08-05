@@ -29,17 +29,15 @@ impl UIScreen for GameScreen {
         
     }   
 
-    fn update(&mut self, delta_time : f32) -> Vec<UIEvent> {
-        Vec::new()
-    }  
-
-    fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
+    fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
         for (event, event_type) in input {
             match (event, event_type) {
                 _ => { }
             }
         }
-    }   
+
+        Vec::new()
+    }
 
     fn render(&self, buffer : &mut RgbImage) {
         self.page.draw(buffer);

@@ -43,8 +43,8 @@ impl UI {
         self.change_screen(Screen::Map);
     }
 
-    pub fn update(&mut self, delta_time : f32) -> Vec<UIEvent> {
-        let events = self.ui_screens.get_mut(&self.current_screen).unwrap().update(delta_time);
+    pub fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
+        let events = self.ui_screens.get_mut(&self.current_screen).unwrap().update(input, delta_time);
 
         events.into_iter()
         .filter(|event| {
@@ -54,10 +54,6 @@ impl UI {
             }
         })
         .collect()
-    }
-
-    pub fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
-        self.ui_screens.get_mut(&self.current_screen).unwrap().process_input(input);
     }
 
     pub fn render(&mut self, buffer : &mut RgbImage) {
