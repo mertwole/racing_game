@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use rand::{RngCore, rngs::StdRng};
 
 use crate::{Game, game::player::Player};
@@ -13,14 +15,17 @@ pub use repair_station::*;
 pub use shop::*;
 
 pub enum ServiceAction{
-    BuyGas(u32)
+    BuyGas(u32, ServiceId)
 }
 
+#[derive(Clone, Copy)]
+pub struct ServiceId(usize);
+
 pub struct CityServicesSubset {
-    gas_station_ids : Vec<usize>,
-    hostel_ids : Vec<usize>,
-    repair_station_ids : Vec<usize>,
-    shop_ids : Vec<usize>
+    gas_station_ids : Vec<ServiceId>,
+    hostel_ids : Vec<ServiceId>,
+    repair_station_ids : Vec<ServiceId>,
+    shop_ids : Vec<ServiceId>
 }
 
 pub struct Services {
@@ -31,10 +36,10 @@ pub struct Services {
 }
 
 pub struct ServiceReferences<'a> {
-    pub gas_stations : Vec<&'a GasStation>,
-    pub hostels : Vec<&'a Hostel>,
-    pub repair_stations : Vec<&'a RepairStation>,
-    pub shops : Vec<&'a Shop>
+    pub gas_stations : Vec<(ServiceId, &'a GasStation)>,
+    pub hostels : Vec<(ServiceId, &'a Hostel)>,
+    pub repair_stations : Vec<(ServiceId, &'a RepairStation)>,
+    pub shops : Vec<(ServiceId, &'a Shop)>
 }
 
 impl Services {
@@ -56,7 +61,7 @@ impl Services {
 
         for _i in 0..city_count {
             subsets.push(CityServicesSubset { 
-                gas_station_ids : vec![0], 
+                gas_station_ids : vec![ServiceId(0)], 
                 hostel_ids : Vec::new(), 
                 repair_station_ids : Vec::new(), 
                 shop_ids : Vec::new() 
@@ -67,10 +72,12 @@ impl Services {
     }
 
     pub fn get_subset_services(&self, subset : &CityServicesSubset) -> ServiceReferences {
-        let mut gas_stations : Vec<&GasStation> = Vec::with_capacity(subset.gas_station_ids.len());
+        let mut gas_stations : Vec<(ServiceId, &GasStation)> = Vec::with_capacity(subset.gas_station_ids.len());
 
         for &gas_station_id in &subset.gas_station_ids {
-            gas_stations.push(&self.gas_stations[gas_station_id]);
+            unsafe {
+                gas_stations.push((gas_station_id, &self.gas_stations[gas_station_id.0]));
+            }
         }
 
         ServiceReferences {
@@ -83,7 +90,7 @@ impl Services {
 
     pub fn process_action(&mut self, action : ServiceAction, player : &mut Player) {
         match action {
-            ServiceAction::BuyGas(amount) => { self.gas_stations[0].buy_gas(amount, player); }
+            ServiceAction::BuyGas(amount, id) => { self.gas_stations[id.0].buy_gas(amount, player); }
         }
     }   
 }

@@ -7,7 +7,7 @@ use crate::engine::ui::font::*;
 use crate::engine::ui::*;
 use crate::engine::ui::selector_menu::*;
 use crate::game::*;
-use crate::game::city_map::services::ServiceAction;
+use crate::game::city_map::services::*;
 use crate::game::ui::{UIEvent, Screen};
 
 use super::UIScreen;
@@ -21,7 +21,8 @@ enum MenuEvents {
 pub struct GasStationsScreen{
     menu : SelectorMenu<MenuEvents>,
     menu_item_selected : bool,
-    player : Option<Player>
+    player : Option<Player>,
+    gas_stations : Vec<ServiceId>
 }
 
 impl GasStationsScreen {
@@ -53,13 +54,17 @@ impl GasStationsScreen {
 
         let menu = SelectorMenu::new(vec![refuel_item, back_item], pointer_image, resolution.clone());
 
-        GasStationsScreen { menu, menu_item_selected : false, player : None }
+        GasStationsScreen { menu, menu_item_selected : false, player : None, gas_stations : Vec::new() }
     }
 }
 
 impl UIScreen for GasStationsScreen {
     fn init(&mut self, game : &Game) {
         self.player = Some(game.player.clone());
+        self.gas_stations = game.city_map.get_current_city_services().gas_stations
+        .iter()
+        .map(|gs| gs.0)
+        .collect();
     }
 
     fn update(&mut self, delta_time : f32) -> Vec<UIEvent> {
@@ -68,7 +73,7 @@ impl UIScreen for GasStationsScreen {
             let menu_event = self.menu.select_current();
             match menu_event {
                 MenuEvents::Refuel => { 
-                    return vec![UIEvent::ServiceAction(ServiceAction::BuyGas(1))]; 
+                    return vec![UIEvent::ServiceAction(ServiceAction::BuyGas(1, self.gas_stations[0]))]; 
                 },
                 MenuEvents::Back => { return vec![UIEvent::ChangeScreen(Screen::Services)]; } 
             }

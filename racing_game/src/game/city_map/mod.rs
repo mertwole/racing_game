@@ -208,8 +208,6 @@ impl CityMap {
 
         for road in &mut roads{ road.generate(rng, 1.0); }
 
-        let services = Services::generate(rng);
-
         CityMap { cities, roads, services, size : parameters.size, current_city_id : start_city_id, current_destination_city_id : start_city_id }
     }
 }
