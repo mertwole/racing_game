@@ -22,26 +22,22 @@ impl RoadPath {
     }
 
     pub fn generate(&mut self, rng : &mut StdRng, difficulty : f32) {
-        let points = vec! [
-            RoadPoint::new(0.0, 0.0, 0.0),
-            //RoadPoint::new(10.0, 0.0, 0.0),
-            //RoadPoint::new(30.0, 1.0, 0.2),
-            //RoadPoint::new(35.0, 2.0, 0.2),
-            //RoadPoint::new(60.0, 3.0, 0.0),
-            RoadPoint::new(150.0, 0.0, 0.0)
+        let curvatures = vec![
+            Curvature { start : 10.0, end : 30.0, strength : 0.01 },
+            Curvature { start : 40.0, end : 60.0, strength : -0.01 }
         ];
 
         let heels = vec![
-            Heel::new(0.0, 50.0, 0.0, 0.003),
-            Heel::new(50.0, 100.0, 0.003, 0.0),
+            //Heel::new(0.0, 50.0, 0.0, 0.003),
+            //Heel::new(50.0, 100.0, 0.003, 0.0),
             //Heel::new(75.0, 100.0, -0.001, 0.0)
         ];
 
-        let road_data = RoadData::new(0.0, 150.0, points, heels);
+        let road_data = RoadData::new(0.0, 150.0, curvatures, heels);
 
         let roads_data = vec![road_data];
         
-        let meta = RoadPathMeta { roads_data, length : 100.0 };
+        let meta = RoadPathMeta { roads_data, length : 150.0 };
         self.meta = Some(meta);
     }
 

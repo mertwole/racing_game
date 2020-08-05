@@ -26,62 +26,36 @@ pub struct RoadData {
     track_length : f32,
     start_distance : f32,
     heels : Vec<Heel>,
-    points : Vec<RoadPoint>
+    curvatures : Vec<Curvature>
+
 }
 
 #[derive(Clone)]
-pub struct RoadPoint {
-    road_distance : f32,
-    offset : f32,
-    angle : f32
+pub struct Curvature {
+    pub start : f32,
+    pub end : f32,
+    pub strength : f32
 }
 
-impl RoadPoint {
-    pub fn new(road_distance : f32, offset : f32, angle : f32) -> RoadPoint {
-        RoadPoint { road_distance, offset, angle }
-    }
+pub enum OffsetMode {
+    Normal(f32, usize),
+    AsIs
 }
 
 impl RoadData {
-    pub fn new(start_distance : f32, length : f32, road_points : Vec<RoadPoint>, heels : Vec<Heel>) -> RoadData {
-        RoadData { track_length : length, start_distance, heels, points : road_points }
+    pub fn new(start_distance : f32, length : f32, curvatures : Vec<Curvature>, heels : Vec<Heel>) -> RoadData {
+        RoadData { track_length : length, start_distance, heels, curvatures }
     }
 
-    pub fn get_norm_segment_offset(&self, road_distance : f32) -> f32 {
-        for i in 0..self.points.len() {
-            if road_distance < self.points[i].road_distance {
-                let start_angle = self.points[i - 1].angle;
-                let end_angle = self.points[i].angle;
-                let start_distance = self.points[i - 1].road_distance;
-                let end_distance = self.points[i].road_distance;
-                let start_offset = self.points[i - 1].offset;
-                let end_offset = self.points[i].offset;
-
-                if start_angle == end_angle {
-                    let t = (road_distance - self.points[i - 1].road_distance) / (self.points[i].road_distance - self.points[i - 1].road_distance);
-                    return Math::lerp(start_offset, end_offset, t);
-                }
-
-                // Bezier curve.
-                let p0 = Vec2::new(start_distance, start_offset);
-                let p2 = Vec2::new(end_distance, end_offset);
-
-                let start_line = Line::new(p0.clone(), Vec2::new(1.0, start_angle));
-                let end_line = Line::new(p2.clone(), Vec2::new(1.0, end_angle));
-
-                let p1 = Geometry::line_intersect(&start_line, &end_line);
-                
-                let discr = 4.0 * (p1.x - p0.x) * (p1.x - p0.x) - 4.0 * (p0.x + p2.x - 2.0 * p1.x) * (p0.x - road_distance);
-                let t0 = (2.0 * (p0.x - p1.x) + discr.sqrt()) / (2.0 * (p0.x + p2.x - 2.0 * p1.x));
-                let t = if t0 > 0.0 && t0 < 1.0 { t0 } else { (2.0 * (p0.x - p1.x) - discr.sqrt()) / (2.0 * (p0.x + p2.x - 2.0 * p1.x)) };
-                
-                let offset = (1.0 - t) * (1.0 - t) * p0.y + 2.0 * t * (1.0 - t) * p1.y + t * t * p2.y;
-                
-                return offset;
+    pub fn get_segment_offset(&self, camera_road_distance : f32, road_distance : f32) -> OffsetMode {
+        for i in 0..self.curvatures.len() {
+            if self.curvatures[i].start < road_distance && self.curvatures[i].end > road_distance {
+                let dist = road_distance - Math::max(self.curvatures[i].start, camera_road_distance);
+                return OffsetMode::Normal(dist * dist * self.curvatures[i].strength, i);
             }
         }
 
-        0.0
+        return OffsetMode::AsIs;
     }
 
     pub fn get_hill_width_multiplier_delta(&self, road_distance : f32) -> f32 {

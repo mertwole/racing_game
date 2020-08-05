@@ -45,6 +45,11 @@ impl Road {
         let mut pitch = camera.pitch;
         pitch += self.data.get_camera_pitch_delta(camera.road_distance);
 
+        let mut offset_delta = 0.0;
+        let mut prev_norm_offset = 0.0;
+        let mut global_offset = 0.0;
+        let mut prev_norm_offset_segment_id = -1;
+
         for y in 0..frame_height {
             // Visible road segment distance.
             let y_norm = (y as f32) / (frame_height as f32);
@@ -60,8 +65,26 @@ impl Road {
             }
 
             // Horizontal offset.
-            let norm_segment_offset = self.data.get_norm_segment_offset(vis_road_dist + camera.road_distance);
-            let norm_road_offset = (norm_segment_offset - camera.x_offset) * camera.screen_dist / vis_road_dist;
+            let segment_offset = self.data.get_segment_offset(camera.road_distance + camera.screen_dist, vis_road_dist + camera.road_distance);
+            let mut norm_road_offset = match segment_offset {
+                OffsetMode::Normal(offset, segment_id) => { 
+                    if prev_norm_offset_segment_id != segment_id as isize {
+                        prev_norm_offset_segment_id = segment_id as isize;
+                        global_offset = prev_norm_offset;
+                    }
+                    
+                    let norm_offset = global_offset + offset * camera.screen_dist / vis_road_dist;
+                    offset_delta = norm_offset - prev_norm_offset; 
+                    norm_offset
+                }
+                OffsetMode::AsIs => { 
+                    global_offset = prev_norm_offset + offset_delta;
+                    prev_norm_offset + offset_delta
+                }
+            };
+            prev_norm_offset = norm_road_offset;
+
+            norm_road_offset -= camera.x_offset * camera.screen_dist / vis_road_dist;
 
             // Hills.
             hill_width_multiplier += self.data.get_hill_width_multiplier_delta(vis_road_dist + camera.road_distance);
@@ -69,7 +92,7 @@ impl Road {
             // Road width.
             let norm_road_width = hill_width_multiplier * camera.screen_dist / vis_road_dist;
 
-            self.y_data.push(RoadYData { distance : vis_road_dist, norm_road_offset, norm_road_width, is_visible : true });
+            self.y_data.push(RoadYData { distance : vis_road_dist, norm_road_offset : norm_road_offset, norm_road_width, is_visible : true });
         }
     }
 
