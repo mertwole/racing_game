@@ -1,5 +1,6 @@
 use rand::{RngCore, rngs::StdRng};
 
+use crate::engine::billboards::*;
 use crate::engine::road::road_data::*;
 
 #[readonly::make]
@@ -13,7 +14,8 @@ pub struct RoadPath {
 #[derive(Clone)]
 pub struct RoadPathMeta{
     pub length : f32,
-    pub roads_data : Vec<RoadData>
+    pub roads_data : Vec<RoadData>,
+    pub billboards : Billboards
 }
 
 impl RoadPath {
@@ -21,7 +23,7 @@ impl RoadPath {
         RoadPath { source_id, destination_id, meta : None }
     }
 
-    pub fn generate(&mut self, rng : &mut StdRng, difficulty : f32) {
+    pub fn generate(&mut self, rng : &mut StdRng, billboard_factories : &Vec<BillboardFactory>, length : f32) {
         let curvatures = vec![
             Curvature { start : 10.0, end : 30.0, strength : 0.01 },
             Curvature { start : 40.0, end : 60.0, strength : -0.01 }
@@ -37,7 +39,10 @@ impl RoadPath {
 
         let roads_data = vec![road_data];
         
-        let meta = RoadPathMeta { roads_data, length : 150.0 };
+        let mut billboards = Billboards::new();
+        billboards.add_static(billboard_factories[0].construct(40.0, 0.0));
+
+        let meta = RoadPathMeta { roads_data, length : 150.0, billboards };
         self.meta = Some(meta);
     }
 

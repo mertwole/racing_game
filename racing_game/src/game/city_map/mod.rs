@@ -1,7 +1,9 @@
 use rand::{RngCore, rngs::StdRng};
 
+use crate::engine::billboards::*;
 use crate::engine::common::{IVec2, LineSegment, Geometry};
 use crate::game::player::Player;
+use crate::game::Game;
 
 pub mod city;
 pub mod road_path;
@@ -25,7 +27,8 @@ pub struct CityMap{
     pub services : Services,
     pub size : IVec2,
     pub current_city_id : usize,
-    current_destination_city_id : usize
+    current_destination_city_id : usize,
+    billboard_factories : Vec<BillboardFactory>
 }
 
 impl CityMap {
@@ -177,11 +180,23 @@ impl CityMap {
         }     
     }
 
+    fn create_billboard_factories() -> Vec<BillboardFactory> {
+        let mut factories : Vec<BillboardFactory> = Vec::new();
+
+        let spritesheet = Game::load_image_rgba("test_spritesheet.png");
+        let spritesheet_meta = Game::load_file("test_spritesheet.meta");
+        factories.push(BillboardFactory::new(&spritesheet, spritesheet_meta));
+
+        factories
+    }
+
     pub fn generate(rng : &mut StdRng, parameters : GenerationParameters) -> CityMap {
         let city_positions = Self::generate_city_positions(rng, &parameters);
         let (start_city_id, finish_city_id) = Self::select_ending_cities(&city_positions);
         let mut roads = Self::generate_all_valid_roads(&city_positions);
         Self::remove_some_roads(&mut roads, &city_positions, rng);
+
+        let billboard_factories = Self::create_billboard_factories();
 
         let services = Services::generate(rng);
         let service_subsets = services.generate_subsets(city_positions.len(), rng);
@@ -206,9 +221,9 @@ impl CityMap {
         ))
         .collect();
 
-        for road in &mut roads{ road.generate(rng, 1.0); }
+        for road in &mut roads{ road.generate(rng, &billboard_factories, 150.0); }
 
-        CityMap { cities, roads, services, size : parameters.size, current_city_id : start_city_id, current_destination_city_id : start_city_id }
+        CityMap { cities, roads, services, size : parameters.size, current_city_id : start_city_id, current_destination_city_id : start_city_id, billboard_factories }
     }
 }
 

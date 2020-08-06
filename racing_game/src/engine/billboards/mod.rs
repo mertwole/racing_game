@@ -9,6 +9,7 @@ pub use billboard::*;
 #[derive(Copy, Clone)]
 pub struct BillboardId(pub u32);
 
+#[derive(Clone)]
 pub struct Billboards {
     static_billboards : Vec<Billboard>,
     dynamic_billboards : Vec<(BillboardId, Billboard)>
@@ -63,34 +64,27 @@ impl Billboards {
         return billboards;
     }
 
-    pub fn render_all(&self, camera : &Camera, y_data : &Vec<RoadYData>, buffer : &mut RgbImage, road_lendth : f32) {
+    pub fn render_all(&self, camera : &Camera, y_data : &Vec<RoadYData>, buffer : &mut RgbImage) {
         let billboards = self.get_sorted_billboards();
 
         let mut global_distance;
         let mut prev_global_distance = camera.far_plane;
 
         let mut curr_render_billboard : i32 = billboards.len() as i32 - 1;
-        let far_plane_global = camera.road_distance % road_lendth + camera.far_plane;
+        let far_plane_global = camera.road_distance + camera.far_plane;
 
         // Find farthest visible billboard.
         for billboard in billboards.iter().rev() {
             if billboard.road_distance <= far_plane_global { break; }
-
             curr_render_billboard -= 1;
-
-            if curr_render_billboard == -1 {
-                if billboards.last().unwrap().road_distance > camera.road_distance % road_lendth {
-                    curr_render_billboard = billboards.len() as i32 - 1;
-                    break;
-                } else { return; }
-            }
+            if curr_render_billboard == -1 { return; }
         }
 
         let mut curr_render_billboard = curr_render_billboard as usize;
 
         // Render from back to front.
         for y in (0..y_data.len()).rev() {
-            global_distance = (y_data[y].distance + camera.road_distance) % road_lendth;
+            global_distance = y_data[y].distance + camera.road_distance;
 
             let first_rendered_billboard = curr_render_billboard;
 

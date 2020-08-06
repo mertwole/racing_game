@@ -1,10 +1,10 @@
 use image::*;
 use std::rc::Rc;
-use std::fs::File;
 
 mod billboard_lods;
 use billboard_lods::*;
 
+#[derive(Clone)]
 pub struct Billboard{
     pub road_distance : f32,
     pub offset : f32,
