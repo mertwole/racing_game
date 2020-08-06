@@ -282,6 +282,10 @@ impl CityMap {
         self.services.get_subset_services(&self.cities[self.current_city_id].services)
     }
 
+    pub fn get_gas_station(&self, id : ServiceId) -> &GasStation {
+        self.services.get_gas_station(id)
+    }
+
     pub fn process_service_action(&mut self, action : ServiceAction, player : &mut Player) {
         self.services.process_action(action, player);
     }

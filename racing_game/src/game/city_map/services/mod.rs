@@ -19,7 +19,7 @@ pub enum ServiceAction{
 }
 
 #[derive(Clone, Copy)]
-pub struct ServiceId(usize);
+pub struct ServiceId(pub usize);
 
 pub struct CityServicesSubset {
     gas_station_ids : Vec<ServiceId>,
@@ -29,10 +29,10 @@ pub struct CityServicesSubset {
 }
 
 pub struct Services {
-    gas_stations : Vec<GasStation>,
-    hostels : Vec<Hostel>,
-    repair_stations : Vec<RepairStation>,
-    shops : Vec<Shop>
+    pub gas_stations : Vec<GasStation>,
+    pub hostels : Vec<Hostel>,
+    pub repair_stations : Vec<RepairStation>,
+    pub shops : Vec<Shop>
 }
 
 pub struct ServiceReferences<'a> {
@@ -92,5 +92,9 @@ impl Services {
         match action {
             ServiceAction::BuyGas(amount, id) => { self.gas_stations[id.0].buy_gas(amount, player); }
         }
-    }   
+    }  
+    
+    pub fn get_gas_station(&self, id : ServiceId) -> &GasStation {
+        &self.gas_stations[id.0]
+    }
 }

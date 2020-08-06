@@ -26,7 +26,7 @@ pub struct UI {
 impl UI {
     pub fn new(resolution : &IVec2) -> UI {
         let ui_screens = create_all_screens(resolution);
-        UI { ui_screens, current_screen : Screen::Map, game : None } 
+        UI { ui_screens, current_screen : Screen::Services, game : None } 
     }
 
     pub fn set_game(&mut self, game : Rc<Game>) {
