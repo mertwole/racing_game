@@ -96,6 +96,21 @@ impl Road {
         }
     }
 
+    pub fn get_horz_speed(&self, camera : &Camera) -> f32 {
+        let offset = self.data.get_segment_offset(camera.road_distance, camera.road_distance + camera.screen_dist);
+        match offset {
+            OffsetMode::Normal(offset, _) => { offset }
+            OffsetMode::AsIs => { 0.0}
+        }
+    }
+
+    pub fn get_bounds(&self) -> (f32, f32) {
+        let offset = self.y_data[0].norm_road_offset;
+        let half_width = self.y_data[0].norm_road_width * 0.5;
+
+        (offset - half_width, offset + half_width)
+    }
+
     pub fn render_from_y_data(&self, image : &mut RgbImage, camera : &Camera) {
         let mut prev_y_vis_road_dist = 0.0;
 

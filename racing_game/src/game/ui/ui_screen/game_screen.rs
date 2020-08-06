@@ -17,7 +17,7 @@ pub struct GameScreen{
 impl GameScreen {
     pub fn new(resolution : &IVec2, font : Rc<Font>) -> GameScreen {
         let mut game_page = UIPage::new(resolution.clone(), None);
-        let text = UIText::new(font, String::from("ABF"));
+        let text = UIText::new(font, String::from("IM UI"));
         game_page.add_control(Box::from(text), &ControlProperties { pivot : Pivot::LeftBottom, position : IVec2::new(10, 10), binding : Binding::LeftBottom } );
 
         GameScreen { page : game_page }

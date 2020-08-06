@@ -40,7 +40,34 @@ impl RoadPath {
         let roads_data = vec![road_data];
         
         let mut billboards = Billboards::new();
-        billboards.add_static(billboard_factories[0].construct(40.0, 0.0));
+        billboards.add_static(billboard_factories[0].construct(40.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(60.0, -1.1));
+
+        billboards.add_static(billboard_factories[0].construct(80.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(83.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(86.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(89.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(92.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(95.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(98.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(101.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(104.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(107.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(110.0, 1.1));
+        billboards.add_static(billboard_factories[0].construct(113.0, 1.1));
+
+        billboards.add_static(billboard_factories[0].construct(80.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(83.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(86.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(89.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(92.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(95.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(98.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(101.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(104.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(107.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(110.0, -1.1));
+        billboards.add_static(billboard_factories[0].construct(113.0, -1.1));
 
         let meta = RoadPathMeta { roads_data, length : 150.0, billboards };
         self.meta = Some(meta);

@@ -9,51 +9,8 @@ use crate::engine::camera::*;
 use crate::engine::common::{IVec2, ImageOps};
 use super::{EventType, InputEvent};
 
-pub struct Car{
-    acceleration : f32,
-    deceleration : f32,
-    speed : f32,
-    max_speed : f32,
-    steer_speed : f32,
-    x_pos : f32,
-    image : RgbaImage
-}
-
-impl Car {
-    pub fn new(image : RgbaImage, acceleration : f32, deceleration : f32, max_speed : f32, steer_speed : f32) -> Car {
-        Car { 
-            speed : 0.0, 
-            acceleration, 
-            deceleration, 
-            max_speed,
-            steer_speed,
-            x_pos : 0.0,
-
-            image
-        }
-    }
-
-    pub fn gas(&mut self, delta_time : f32) {
-        self.speed += delta_time * self.acceleration;
-        if self.speed > self.max_speed { self.speed = self.max_speed; }
-    }
-
-    pub fn brake(&mut self, delta_time : f32) {
-        self.speed -= delta_time * self.deceleration;
-        if self.speed < 0.0 { self.speed = 0.0; }
-    }
-
-    pub fn steer(&mut self, direction : f32, delta_time : f32) {
-        self.x_pos += direction * delta_time * self.steer_speed;
-    }
-
-    pub fn render(&self, image : &mut RgbImage) {
-        let render_x = image.width() / 2 - self.image.width() / 2;
-        let render_y = 0;
-
-        ImageOps::overlay_rgba(image, &self.image, &IVec2::new(render_x as isize, render_y));
-    }
-}
+mod car;
+use car::*;
 
 pub struct Ride {
     roads : Vec<Road>,
@@ -72,12 +29,15 @@ pub enum RideEvent {
 }
 
 const screen_height : u32 = 360;
+const screen_width : u32 = 640;
 
 impl Ride {
     pub fn new() -> Ride {
         let horizon = Horizon::new(Game::load_image_rgba("horizon.png"));
         let camera = Camera { screen_dist : 1.0, viewport_height : 1.0, y_pos : 1.0, far_plane : 150.0, pitch : 1.5, road_distance : 0.0, x_offset : 0.0 }; 
-        let car = Car::new(Game::load_image_rgba("ferrari.png"), 5.0, 5.0, 10.0, 1.5);
+        let car_img = Game::load_image_rgba("ferrari.png");
+        let car_width = car_img.width() as f32 / screen_width as f32;
+        let car = Car::new(car_img, car_width, 5.0, 5.0, 10.0, 1.5);
         Ride { roads : Vec::new(), billboards : Billboards::new(), car, horizon, camera, length : 0.0, active : false, car_input : IVec2::zero() }
     }
 
@@ -124,6 +84,16 @@ impl Ride {
         }
 
         self.car.steer(self.car_input.x as f32, delta_time);
+
+        self.car.x_pos -= self.roads[0].get_horz_speed(&self.camera) * self.car.speed * delta_time * 5.0;
+
+        let road_bounds = self.roads[0].get_bounds();
+        if self.car.x_pos - self.car.width * 0.5 < road_bounds.0 {
+            println!("out of bounds!");
+        }
+        if self.car.x_pos + self.car.width * 0.5 > road_bounds.1 {
+            println!("out of bounds!");
+        }
 
         self.camera.x_offset = self.car.x_pos;
         self.camera.road_distance += self.car.speed * delta_time;
