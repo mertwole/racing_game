@@ -278,15 +278,15 @@ impl CityMap {
         panic!("incorrect road!");
     }
 
-    pub fn get_current_city_services(&self) -> ServiceReferences {
-        self.services.get_subset_services(&self.cities[self.current_city_id].services)
+    pub fn get_current_city_services_subset(&self) -> CityServicesSubset {
+        self.cities[self.current_city_id].services.clone()
     }
 
-    pub fn get_gas_station(&self, id : ServiceId) -> &GasStation {
-        self.services.get_gas_station(id)
+    pub fn get_service<T>(&self, id : ServiceId) -> &T where T : Sized + 'static {
+        self.services.get_service::<T>(id)
     }
 
-    pub fn process_service_action(&mut self, action : ServiceAction, player : &mut Player) {
-        self.services.process_action(action, player);
+    pub fn process_service_action(&mut self, service_id : ServiceId, action : ServiceAction, player : &mut Player) { 
+        self.services.process_action(service_id, action, player);
     }
 }

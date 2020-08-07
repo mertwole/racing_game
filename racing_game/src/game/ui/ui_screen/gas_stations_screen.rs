@@ -80,13 +80,13 @@ impl GasStationsScreen {
     }
 
     fn get_max_gas_amount(&self) -> u32 {
-        let gas_station = self.game.as_ref().unwrap().city_map.get_gas_station(self.selected_station);
+        let gas_station = self.game.as_ref().unwrap().city_map.get_service::<GasStation>(self.selected_station);
         let player_money = self.game.as_ref().unwrap().player.money;
         gas_station.get_max_gas_amount(player_money)
     }
 
     fn get_gas_cost(&self, amount : u32) -> f32 {
-        let gas_station = self.game.as_ref().unwrap().city_map.get_gas_station(self.selected_station);
+        let gas_station = self.game.as_ref().unwrap().city_map.get_service::<GasStation>(self.selected_station);
         gas_station.get_cost(amount)
     }
 
@@ -106,10 +106,7 @@ impl GasStationsScreen {
 impl UIScreen for GasStationsScreen {
     fn init(&mut self, game : &Game) {
         unsafe { self.game = Some(Rc::from_raw(game as *const Game)); }
-        self.gas_stations = game.city_map.get_current_city_services().gas_stations
-        .iter()
-        .map(|gs| gs.0)
-        .collect();
+        self.gas_stations = game.city_map.get_current_city_services_subset().gas_station_ids;
     }
 
     fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
@@ -155,7 +152,7 @@ impl UIScreen for GasStationsScreen {
                             }
                         }
                         (InputEvent::UISelect, EventType::Pressed) => { 
-                            return vec![UIEvent::ServiceAction(ServiceAction::BuyGas(self.buy_gas_amount, self.selected_station))]; 
+                            return vec![UIEvent::ServiceAction(self.selected_station, ServiceAction::BuyGas(self.buy_gas_amount))]; 
                         }
                         (InputEvent::UIBack, EventType::Pressed) => { 
                             self.buy_gas_modal.start_anim_fold(100.0);

@@ -135,8 +135,8 @@ impl Game {
                 UIEvent::ChangePlayer(player) => {
                     self.player = player;
                 }
-                UIEvent::ServiceAction(action) => {
-                    self.city_map.process_service_action(action, &mut self.player); 
+                UIEvent::ServiceAction(id, action) => {
+                    self.city_map.process_service_action(id, action, &mut self.player); 
                 }
                 _ => { }
             } 

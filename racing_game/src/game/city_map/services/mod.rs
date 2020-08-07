@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::any::TypeId;
 
 use rand::{RngCore, rngs::StdRng};
 
@@ -15,17 +16,18 @@ pub use repair_station::*;
 pub use shop::*;
 
 pub enum ServiceAction{
-    BuyGas(u32, ServiceId)
+    BuyGas(u32)
 }
 
 #[derive(Clone, Copy)]
 pub struct ServiceId(pub usize);
 
+#[derive(Clone)]
 pub struct CityServicesSubset {
-    gas_station_ids : Vec<ServiceId>,
-    hostel_ids : Vec<ServiceId>,
-    repair_station_ids : Vec<ServiceId>,
-    shop_ids : Vec<ServiceId>
+    pub gas_station_ids : Vec<ServiceId>,
+    pub hostel_ids : Vec<ServiceId>,
+    pub repair_station_ids : Vec<ServiceId>,
+    pub shop_ids : Vec<ServiceId>
 }
 
 pub struct Services {
@@ -33,13 +35,6 @@ pub struct Services {
     pub hostels : Vec<Hostel>,
     pub repair_stations : Vec<RepairStation>,
     pub shops : Vec<Shop>
-}
-
-pub struct ServiceReferences<'a> {
-    pub gas_stations : Vec<(ServiceId, &'a GasStation)>,
-    pub hostels : Vec<(ServiceId, &'a Hostel)>,
-    pub repair_stations : Vec<(ServiceId, &'a RepairStation)>,
-    pub shops : Vec<(ServiceId, &'a Shop)>
 }
 
 impl Services {
@@ -71,30 +66,26 @@ impl Services {
         subsets
     }
 
-    pub fn get_subset_services(&self, subset : &CityServicesSubset) -> ServiceReferences {
-        let mut gas_stations : Vec<(ServiceId, &GasStation)> = Vec::with_capacity(subset.gas_station_ids.len());
-
-        for &gas_station_id in &subset.gas_station_ids {
-            unsafe {
-                gas_stations.push((gas_station_id, &self.gas_stations[gas_station_id.0]));
-            }
-        }
-
-        ServiceReferences {
-            gas_stations,
-            hostels : Vec::new(),
-            repair_stations : Vec::new(),
-            shops : Vec::new()
-        }
-    }
-
-    pub fn process_action(&mut self, action : ServiceAction, player : &mut Player) {
+    pub fn process_action(&mut self, id : ServiceId, action : ServiceAction, player : &mut Player) {
         match action {
-            ServiceAction::BuyGas(amount, id) => { self.gas_stations[id.0].buy_gas(amount, player); }
+            ServiceAction::BuyGas(amount) => { self.gas_stations[id.0].buy_gas(amount, player); }
         }
     }  
     
-    pub fn get_gas_station(&self, id : ServiceId) -> &GasStation {
-        &self.gas_stations[id.0]
+    pub fn get_service<T>(&self, id : ServiceId) -> &T where T : Sized + 'static {
+        let gas_station_type_id = TypeId::of::<GasStation>();
+        let hostel_type_id = TypeId::of::<Hostel>();
+        let repair_station_type_id = TypeId::of::<RepairStation>();
+        let shop_type_id = TypeId::of::<Shop>();
+
+        unsafe { 
+            &*match TypeId::of::<T>() {
+                gas_station_type_id => { &self.gas_stations[id.0] as *const GasStation as *const T}
+                hostel_type_id => { &self.hostels[id.0] as *const Hostel as *const T}
+                repair_station_type_id => { &self.repair_stations[id.0] as *const RepairStation as *const T}
+                shop_type_id => { &self.shops[id.0] as *const Shop as *const T}
+                _ => { panic!("Incorrect service type!"); }
+            } 
+        }
     }
 }
