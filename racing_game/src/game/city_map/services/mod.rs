@@ -44,9 +44,12 @@ impl Services {
         let mut repair_stations = Vec::new();
         let mut shops = Vec::new();
 
-        let gs_logo = Game::load_image_rgba("logo.png");
-        let gas_station = GasStation::generate(gs_logo, rng);
-        gas_stations.push(gas_station);
+        let gs0_logo = Game::load_image_rgba("logo0.png");
+        let gas_station0 = GasStation::generate(gs0_logo, rng);
+        gas_stations.push(gas_station0);
+        let gs1_logo = Game::load_image_rgba("logo1.png");
+        let gas_station1 = GasStation::generate(gs1_logo, rng);
+        gas_stations.push(gas_station1);
 
         Services { gas_stations, hostels, repair_stations, shops }
     }
@@ -56,7 +59,7 @@ impl Services {
 
         for _i in 0..city_count {
             subsets.push(CityServicesSubset { 
-                gas_station_ids : vec![ServiceId(0)], 
+                gas_station_ids : vec![ServiceId(0), ServiceId(1)], 
                 hostel_ids : Vec::new(), 
                 repair_station_ids : Vec::new(), 
                 shop_ids : Vec::new() 

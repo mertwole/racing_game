@@ -26,56 +26,31 @@ enum State{
 }
 
 pub struct GasStationsScreen{
-    menu : SelectorMenu<MenuEvents>,
+    menu : Option<SelectorMenu<MenuEvents>>,
     buy_gas_modal : ModalPage,
     gas_stations : Vec<ServiceId>,
     game : Option<Rc<Game>>,
     state : State,
     buy_gas_amount : u32,
     selected_station : ServiceId,
-    font : Rc<Font>
+    font : Rc<Font>,
+    resolution : IVec2
 }
 
 impl GasStationsScreen {
     pub fn new(resolution : &IVec2, font : Rc<Font>) -> GasStationsScreen {
-        let pointer_image = Game::load_image_rgba("ui/pointer.png");
-
-        let gas_stations_label = UIText::new(font.clone(), String::from("REFUEL"));
-        let next_label = UIText::new(font.clone(), String::from("BACK"));
-
-        let refuel_item = MenuItem::new(
-            Box::from(gas_stations_label), 
-            ControlProperties { 
-                pivot : Pivot::LeftTop, 
-                position : IVec2::new(20, -20), 
-                binding : Binding::LeftTop 
-            }, 
-            MenuEvents::Refuel(0)
-        );
-
-        let back_item = MenuItem::new(
-            Box::from(next_label), 
-            ControlProperties { 
-                pivot : Pivot::LeftBottom, 
-                position : IVec2::new(20, 20), 
-                binding : Binding::LeftBottom 
-            }, 
-            MenuEvents::Back
-        );
-
-        let menu = SelectorMenu::new(vec![refuel_item, back_item], pointer_image, resolution.clone());
-
         let buy_gas_modal = ModalPage::new(IVec2::new(100, 100), IVec2::new(200, 100), Some(Rgb([150, 150, 150])));
 
         GasStationsScreen { 
-            menu, 
+            menu : None, 
             gas_stations : Vec::new(), 
             buy_gas_modal, 
             state : State::SelectingGasStation, 
             buy_gas_amount : 0, 
             selected_station : ServiceId(0),
             game : None,
-            font : font.clone() 
+            font : font.clone(),
+            resolution : resolution.clone()
         }
     }
 
@@ -107,6 +82,43 @@ impl UIScreen for GasStationsScreen {
     fn init(&mut self, game : &Game) {
         unsafe { self.game = Some(Rc::from_raw(game as *const Game)); }
         self.gas_stations = game.city_map.get_current_city_services_subset().gas_station_ids;
+
+        let mut menu_items = Vec::new();
+
+        let mut i = 0;
+        for id in &self.gas_stations {
+            let gas_station = self.game.as_ref().unwrap().city_map.get_service::<GasStation>(*id);
+            let logo = UIImage::new(gas_station.logo.clone());
+            let station_item = MenuItem::new(
+                Box::from(logo), 
+                ControlProperties { 
+                    pivot : Pivot::LeftTop, 
+                    position : IVec2::new(20, -20 - 20 * i), 
+                    binding : Binding::LeftTop 
+                }, 
+                MenuEvents::Refuel(i as usize)
+            );
+
+            menu_items.push(station_item);
+
+            i += 1;
+        }
+
+        let next_label = UIText::new(self.font.clone(), String::from("BACK"));
+        let back_item = MenuItem::new(
+            Box::from(next_label), 
+            ControlProperties { 
+                pivot : Pivot::LeftBottom, 
+                position : IVec2::new(20, 20), 
+                binding : Binding::LeftBottom 
+            }, 
+            MenuEvents::Back
+        );
+
+        menu_items.push(back_item);
+
+        let pointer_image = Game::load_image_rgba("ui/pointer.png");
+        self.menu = Some(SelectorMenu::new(menu_items, pointer_image, self.resolution.clone()));
     }
 
     fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
@@ -117,14 +129,15 @@ impl UIScreen for GasStationsScreen {
 
                 for (event, event_type) in input {
                     match (event, event_type) {
-                        (InputEvent::UIDown, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, -1)); }
-                        (InputEvent::UIUp, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, 1)); }
+                        (InputEvent::UIDown, EventType::Pressed) => { self.menu.as_mut().unwrap().select_next_in_direction(&IVec2::new(0, 1)); }
+                        (InputEvent::UIUp, EventType::Pressed) => { self.menu.as_mut().unwrap().select_next_in_direction(&IVec2::new(0, -1)); }
                         (InputEvent::UISelect, EventType::Pressed) => { 
-                            let menu_event = self.menu.select_current();
+                            let menu_event = self.menu.as_mut().unwrap().select_current();
                             match menu_event {
                                 MenuEvents::Refuel(station_id) => { 
                                     self.selected_station = self.gas_stations[station_id];
-                                    self.buy_gas_modal.start_anim_unfold(100.0);
+                                    self.buy_gas_modal.start_anim_unfold(1000.0);
+                                    self.buy_gas_amount = 0;
                                     self.state = State::OpeningModalWindow;
                                 },
                                 MenuEvents::Back => { 
@@ -155,7 +168,7 @@ impl UIScreen for GasStationsScreen {
                             return vec![UIEvent::ServiceAction(self.selected_station, ServiceAction::BuyGas(self.buy_gas_amount))]; 
                         }
                         (InputEvent::UIBack, EventType::Pressed) => { 
-                            self.buy_gas_modal.start_anim_fold(100.0);
+                            self.buy_gas_modal.start_anim_fold(1000.0);
                             self.state = State::ClosingModalWindow;
                         }
                         _ => { }
@@ -176,7 +189,7 @@ impl UIScreen for GasStationsScreen {
     }  
 
     fn render(&self, buffer : &mut RgbImage) {
-        self.menu.render(buffer);
+        self.menu.as_ref().unwrap().render(buffer);
         self.buy_gas_modal.draw(buffer);
     }
 }
