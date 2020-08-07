@@ -80,10 +80,10 @@ impl Game {
         input.bind_action(InputEvent::UISelect, Key::Enter);
         input.bind_action(InputEvent::UIBack, Key::Backspace);
 
-        let mut generation_rng = rand::rngs::StdRng::from_seed([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]);
+        let mut generation_rng = rand::rngs::StdRng::from_seed([10, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]);
         let parameters = city_map::GenerationParameters { 
-            city_count : 9, 
-            size : IVec2::new(200, 200),
+            city_count : 19, 
+            size : IVec2::new(300, 300),
             min_distance_between_cities : 50.0 
         };
         let city_map = CityMap::generate(&mut generation_rng, parameters);

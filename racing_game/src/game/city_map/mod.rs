@@ -32,7 +32,7 @@ pub struct CityMap{
 }
 
 impl CityMap {
-    // Checks graph that conatins verts [0..verts_count);
+    // Works on graph that conatins verts [0..verts_count);
     fn check_graph_coherency(verts_count : usize, connections : &Vec<(usize, usize)>, source : usize, destination : usize) -> bool {       
         #[derive(Clone)]
         enum VertState {
@@ -77,7 +77,54 @@ impl CityMap {
 
             if !to_check_exists { return false; } 
         }
-         
+    }
+
+    // Works on graph that conatins verts [0..verts_count);
+    fn farthest_point(verts_count : usize, connections : &Vec<(usize, usize)>, source : usize) -> usize {
+        #[derive(Clone, PartialEq)]
+        enum VertState {
+            UNCHECKED,
+            CHECKED,
+            TO_CHECK
+        }
+
+        let mut vert_states : Vec<VertState> = vec![VertState::UNCHECKED; verts_count];
+        vert_states[source] = VertState::TO_CHECK;
+        
+        let mut last_checked = 0;
+
+        // Double buffering to make spread of wave even.
+        let mut to_check_ids : Vec<usize> = Vec::new();
+
+        loop {
+            for i in 0..vert_states.len() {
+                match vert_states[i] {
+                    VertState::TO_CHECK => { 
+                        for connection in connections {
+                            if connection.0 == i && vert_states[connection.1] == VertState::UNCHECKED {
+                                to_check_ids.push(connection.1);
+                            } else if connection.1 == i && vert_states[connection.0] == VertState::UNCHECKED {
+                                to_check_ids.push(connection.0);
+                            }
+                        }
+
+                        vert_states[i] = VertState::CHECKED;
+                        last_checked = i;                 
+                    }
+                    _ => {}
+                }
+            }
+
+            if to_check_ids.is_empty() {
+                return last_checked;
+            }
+
+            for &to_check in &to_check_ids {
+                vert_states[to_check] = VertState::TO_CHECK;  
+            }
+
+            to_check_ids.clear();
+        }
     }
 
     fn generate_city_positions(rng : &mut StdRng, parameters : &GenerationParameters) -> Vec<IVec2>{
@@ -104,20 +151,17 @@ impl CityMap {
         city_positions
     }   
 
-    fn select_ending_cities(city_positions : &Vec<IVec2>) -> (usize, usize) {
+    fn select_ending_cities(city_positions : &Vec<IVec2>, roads : &Vec<(usize, usize)>) -> (usize, usize) {
         let mut start_city_id = 0; // Left bottom city.
-        let mut finish_city_id = 0; // Right top city.
+        
         for i in 0..city_positions.len() {
             if city_positions[i].x < city_positions[start_city_id].x 
             || (city_positions[i].x == city_positions[start_city_id].x && city_positions[i].y < city_positions[start_city_id].y) {
                 start_city_id = i;
             }
-
-            if city_positions[i].x > city_positions[finish_city_id].x 
-            || (city_positions[i].x == city_positions[finish_city_id].x && city_positions[i].y > city_positions[finish_city_id].y) {
-                finish_city_id = i;
-            }
         }
+
+        let finish_city_id = Self::farthest_point(city_positions.len(), roads, start_city_id);
 
         (start_city_id, finish_city_id)
     }
@@ -192,9 +236,9 @@ impl CityMap {
 
     pub fn generate(rng : &mut StdRng, parameters : GenerationParameters) -> CityMap {
         let city_positions = Self::generate_city_positions(rng, &parameters);
-        let (start_city_id, finish_city_id) = Self::select_ending_cities(&city_positions);
         let mut roads = Self::generate_all_valid_roads(&city_positions);
         Self::remove_some_roads(&mut roads, &city_positions, rng);
+        let (start_city_id, finish_city_id) = Self::select_ending_cities(&city_positions, &roads);
 
         let billboard_factories = Self::create_billboard_factories();
 
