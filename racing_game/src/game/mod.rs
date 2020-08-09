@@ -84,7 +84,8 @@ impl Game {
         let parameters = city_map::GenerationParameters { 
             city_count : 19, 
             size : IVec2::new(300, 300),
-            min_distance_between_cities : 50.0 
+            min_distance_between_cities : 50.0,
+            road_length_multiplier : 2.0
         };
         let city_map = CityMap::generate(&mut generation_rng, parameters);
         
@@ -127,7 +128,7 @@ impl Game {
         for event in ui_events {
             match event {
                 UIEvent::StartRide => { 
-                    self.ride.start_ride(self.city_map.get_current_road_meta()); 
+                    self.ride.start_ride(self.city_map.get_current_road_meta(), self.player.clone()); 
                 }
                 UIEvent::SelectCityDestination(destination) => {
                     self.city_map.set_city_destination(destination);
@@ -149,6 +150,9 @@ impl Game {
                 RideEvent::Finished => { 
                     self.city_map.arrived_to_city();
                     self.ui.enter_city(); 
+                }
+                RideEvent::ChangePlayer(player) => {
+                    self.player = player;
                 }
                 _ => { }
             } 

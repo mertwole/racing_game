@@ -17,7 +17,8 @@ use services::*;
 pub struct GenerationParameters{
     pub city_count : u32,
     pub size : IVec2,
-    pub min_distance_between_cities : f32
+    pub min_distance_between_cities : f32,
+    pub road_length_multiplier : f32
 }
 
 #[readonly::make]
@@ -249,6 +250,11 @@ impl CityMap {
         .map(|road| RoadPath::new(road.0, road.1))
         .collect();
         
+        for road in &mut roads{ 
+            let road_len = (&city_positions[road.source_id] - &city_positions[road.destination_id]).len();
+            road.generate(rng, &billboard_factories, road_len * parameters.road_length_multiplier);
+        }
+
         let cities : Vec<City> = city_positions.into_iter()
         .enumerate()
         .zip(service_subsets.into_iter())
@@ -264,8 +270,6 @@ impl CityMap {
             services
         ))
         .collect();
-
-        for road in &mut roads{ road.generate(rng, &billboard_factories, 150.0); }
 
         CityMap { cities, roads, services, size : parameters.size, current_city_id : start_city_id, current_destination_city_id : start_city_id, billboard_factories }
     }
@@ -326,7 +330,7 @@ impl CityMap {
         self.cities[self.current_city_id].services.clone()
     }
 
-    pub fn get_service<T>(&self, id : ServiceId) -> &T where T : Sized + 'static {
+    pub fn get_service<T>(&self, id : ServiceId) -> &T where T : Sized + 'static + Service {
         self.services.get_service::<T>(id)
     }
 

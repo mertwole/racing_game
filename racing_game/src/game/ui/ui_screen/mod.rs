@@ -5,18 +5,19 @@ use image::{RgbImage};
 
 use crate::engine::common::IVec2;
 use crate::game::{Game, InputEvent, EventType};
+use crate::game::city_map::services::*;
 use super::UIEvent;
 use crate::engine::ui::font::*;
 
 mod map_screen;
 mod game_screen;
 mod services_screen;
-mod gas_stations_screen;
+mod service_select_screen;
 
 pub use map_screen::*;
 pub use game_screen::*;
 pub use services_screen::*;
-pub use gas_stations_screen::*;
+pub use service_select_screen::*;
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone)]
 pub enum Screen{
@@ -35,7 +36,7 @@ pub fn create_all_screens(resolution : &IVec2) -> HashMap<Screen, Box<dyn UIScre
     let map_screen = Box::from(MapScreen::new(resolution, font.clone()));
     let game_screen = Box::from(GameScreen::new(resolution, font.clone()));
     let services_screen = Box::from(ServicesScreen::new(resolution, font.clone()));
-    let gas_stations_screen = Box::from(GasStationsScreen::new(resolution, font.clone()));
+    let gas_stations_screen = Box::from(ServiceSelectScreen::<GasStation>::new(resolution, font.clone()));
 
     ui_screens.insert(Screen::Map, map_screen);
     ui_screens.insert(Screen::Game, game_screen);

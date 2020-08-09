@@ -95,7 +95,7 @@ impl Billboards {
                 }
 
                 let billboard_scale = camera.screen_dist / y_data[y].distance;
-                let billboard_offset = 0.5 + billboards[curr_render_billboard].offset * billboard_scale + y_data[y].norm_road_offset;
+                let billboard_offset = 0.5/*half of screen*/ + billboards[curr_render_billboard].offset * billboard_scale + y_data[y].norm_road_offset;
 
                 billboards[curr_render_billboard].render((billboard_offset * (buffer.width() as f32)) as i32, y as i32, billboard_scale, buffer);
                 

@@ -10,8 +10,9 @@ pub struct Player {
     pub oil_level : u32,
     pub max_oil_level : u32,
 
-    pub gas_level : u32,
-    pub max_gas_level : u32,
+    pub gas_level : f32,
+    pub gas_per_distance : f32,
+    pub max_gas_level : f32,
 
     pub car_damage : Percent,
 }
@@ -27,8 +28,9 @@ impl Player {
             oil_level : 0,
             max_oil_level : 100,
 
-            gas_level : 0,
-            max_gas_level : 100,
+            gas_level : 0.0,
+            max_gas_level : 100.0,
+            gas_per_distance : 1.0,
 
             car_damage : Percent(0.0)
         }

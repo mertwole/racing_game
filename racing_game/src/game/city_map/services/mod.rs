@@ -1,7 +1,8 @@
 use std::rc::Rc;
 use std::any::TypeId;
 
-use rand::{RngCore, rngs::StdRng};
+use image::RgbaImage;
+use rand::{rngs::StdRng};
 
 use crate::{Game, game::player::Player};
 
@@ -19,6 +20,10 @@ pub enum ServiceAction{
     BuyGas(u32)
 }
 
+pub trait Service {
+    fn get_logo(&self) -> Rc<RgbaImage>;
+}
+
 #[derive(Clone, Copy)]
 pub struct ServiceId(pub usize);
 
@@ -28,6 +33,23 @@ pub struct CityServicesSubset {
     pub hostel_ids : Vec<ServiceId>,
     pub repair_station_ids : Vec<ServiceId>,
     pub shop_ids : Vec<ServiceId>
+}
+
+impl CityServicesSubset {
+    pub fn get_of_type<T>(&self) -> Vec<ServiceId> where T : Sized + 'static + Service {
+        let gas_station_type_id : TypeId = TypeId::of::<GasStation>();
+        let hostel_type_id : TypeId = TypeId::of::<Hostel>();
+        let repair_station_type_id : TypeId = TypeId::of::<RepairStation>();
+        let shop_type_id : TypeId = TypeId::of::<Shop>();
+
+        match TypeId::of::<T>() {
+            gas_station_type_id => { self.gas_station_ids.clone() }
+            hostel_type_id => { self.hostel_ids.clone() }
+            repair_station_type_id => { self.repair_station_ids.clone() }
+            shop_type_id => { self.shop_ids.clone() }
+            _ => { panic!("Incorrect service type!"); }
+        }
+    }   
 }
 
 pub struct Services {
@@ -75,11 +97,11 @@ impl Services {
         }
     }  
     
-    pub fn get_service<T>(&self, id : ServiceId) -> &T where T : Sized + 'static {
-        let gas_station_type_id = TypeId::of::<GasStation>();
-        let hostel_type_id = TypeId::of::<Hostel>();
-        let repair_station_type_id = TypeId::of::<RepairStation>();
-        let shop_type_id = TypeId::of::<Shop>();
+    pub fn get_service<T>(&self, id : ServiceId) -> &T where T : Sized + 'static + Service {
+        let gas_station_type_id : TypeId = TypeId::of::<GasStation>();
+        let hostel_type_id : TypeId = TypeId::of::<Hostel>();
+        let repair_station_type_id : TypeId = TypeId::of::<RepairStation>();
+        let shop_type_id : TypeId = TypeId::of::<Shop>();
 
         unsafe { 
             &*match TypeId::of::<T>() {

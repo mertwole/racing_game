@@ -1,7 +1,7 @@
 use image::{RgbImage, RgbaImage};
 
 use super::city_map::road_path::RoadPathMeta;
-use super::{Game};
+use super::{Game, Player};
 use crate::engine::billboards::*;
 use crate::engine::road::*;
 use crate::engine::horizon::*;
@@ -21,11 +21,13 @@ pub struct Ride {
     active : bool,
 
     car : Car,
+    player : Option<Player>,
     car_input : IVec2
 }
 
 pub enum RideEvent {
-    Finished
+    Finished,
+    ChangePlayer(Player)
 }
 
 const screen_height : u32 = 360;
@@ -38,15 +40,28 @@ impl Ride {
         let car_img = Game::load_image_rgba("ferrari.png");
         let car_width = car_img.width() as f32 / screen_width as f32;
         let car = Car::new(car_img, car_width, 5.0, 5.0, 10.0, 1.5);
-        Ride { roads : Vec::new(), billboards : Billboards::new(), car, horizon, camera, length : 0.0, active : false, car_input : IVec2::zero() }
+        Ride { 
+            roads : Vec::new(),
+            billboards : Billboards::new(), 
+            car, 
+            horizon, 
+            camera,
+            length : 0.0, 
+            active : false, 
+            car_input : IVec2::zero(), 
+            player : None
+        }
     }
 
-    pub fn start_ride(&mut self, ride_data : RoadPathMeta) {
+    pub fn start_ride(&mut self, ride_data : RoadPathMeta, player : Player) {
         self.active = true;
         self.camera.road_distance = 0.0;
         self.length = ride_data.length;
 
+        self.player = Some(player);
+
         self.billboards = ride_data.billboards;
+        self.roads.clear();
         for road_data in ride_data.roads_data {
             self.roads.push(Road::new(Game::load_image_rgb("road_tex.png"), road_data));
         }
@@ -73,6 +88,8 @@ impl Ride {
     pub fn update(&mut self, delta_time : f32) -> Vec<RideEvent> {
         if !self.active { return Vec::new(); } 
 
+        let mut events : Vec<RideEvent> = Vec::new();
+
         for road in &mut self.roads {
             road.compute_y_data(&self.camera, screen_height);
         }
@@ -82,6 +99,9 @@ impl Ride {
         } else if self.car_input.y == -1 {
             self.car.brake(delta_time);
         }
+
+        self.player.as_mut().unwrap().gas_level -= self.car.speed * delta_time;
+        events.push(RideEvent::ChangePlayer(self.player.as_ref().unwrap().clone()));
 
         self.car.steer(self.car_input.x as f32, delta_time);
 
@@ -103,7 +123,7 @@ impl Ride {
             return vec![RideEvent::Finished];
         }
 
-        return Vec::new();
+        return events;
     }
 
     pub fn render(&self, buffer : &mut RgbImage) {

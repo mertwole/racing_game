@@ -1,4 +1,4 @@
-use rand::{RngCore, rngs::StdRng};
+use rand::{rngs::StdRng, Rng};
 
 use crate::engine::billboards::*;
 use crate::engine::road::road_data::*;
@@ -24,10 +24,24 @@ impl RoadPath {
     }
 
     pub fn generate(&mut self, rng : &mut StdRng, billboard_factories : &Vec<BillboardFactory>, length : f32) {
-        let curvatures = vec![
-            Curvature { start : 10.0, end : 30.0, strength : 0.01 },
-            Curvature { start : 40.0, end : 60.0, strength : -0.01 }
-        ];
+        let mut curvatures : Vec<Curvature>= Vec::new();
+
+        let start_straight_len = rng.gen_range(50.0, 100.0);
+        let end_straight_len = rng.gen_range(10.0, 50.0);
+        let mut curr_dist = start_straight_len;
+        loop {
+            let curvature_len = rng.gen_range(20.0, 40.0);
+            let curvature_strength = rng.gen_range(-0.01, 0.01);
+
+            curvatures.push( Curvature { start : curr_dist, end : curr_dist + curvature_len, strength : curvature_strength });
+
+            curr_dist += curvature_len;
+
+            let straight_len = rng.gen_range(1.0, 10.0);
+            curr_dist += straight_len;
+
+            if curr_dist + end_straight_len > length { break; }
+        }
 
         let heels = vec![
             //Heel::new(0.0, 50.0, 0.0, 0.003),
@@ -35,7 +49,7 @@ impl RoadPath {
             //Heel::new(75.0, 100.0, -0.001, 0.0)
         ];
 
-        let road_data = RoadData::new(0.0, 150.0, curvatures, heels);
+        let road_data = RoadData::new(0.0, length, curvatures, heels);
 
         let roads_data = vec![road_data];
         
@@ -69,7 +83,7 @@ impl RoadPath {
         billboards.add_static(billboard_factories[0].construct(110.0, -1.1));
         billboards.add_static(billboard_factories[0].construct(113.0, -1.1));
 
-        let meta = RoadPathMeta { roads_data, length : 150.0, billboards };
+        let meta = RoadPathMeta { roads_data, length, billboards };
         self.meta = Some(meta);
     }
 

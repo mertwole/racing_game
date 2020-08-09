@@ -119,7 +119,6 @@ impl Road {
 
         for y in 0..self.y_data.len() as u32 {
             let y_data = self.y_data[y as usize];
-
             // Horz lines. 
             if prev_y_vis_road_dist != 0.0 { 
                 let segment_length = y_data.distance - prev_y_vis_road_dist;
@@ -134,7 +133,7 @@ impl Road {
 
             // Road borders.
             let road_width = self.width * y_data.norm_road_width;
-            let norm_left_border = (1.0 - road_width) * 0.5 + y_data.norm_road_offset;
+            let norm_left_border = 0.5 - road_width * 0.5 + y_data.norm_road_offset;
             let norm_right_border = norm_left_border + road_width;
 
             let left_border_px = (norm_left_border * (image.width() as f32)) as i32;

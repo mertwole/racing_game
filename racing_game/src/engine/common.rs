@@ -455,6 +455,10 @@ impl IVec2{
         self.x * self.x + self.y * self.y
     }
 
+    pub fn len(&self) -> f32 {
+        (self.sqr_len() as f32).sqrt()
+    }
+
     pub fn dot(&self, rhs : &IVec2) -> isize {
         self.x * rhs.x + self.y * rhs.y
     }

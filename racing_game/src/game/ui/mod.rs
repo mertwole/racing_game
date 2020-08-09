@@ -41,7 +41,7 @@ impl UI {
     }
 
     pub fn enter_city(&mut self) {
-        self.change_screen(Screen::Map);
+        self.change_screen(Screen::Services);
     }
 
     pub fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {

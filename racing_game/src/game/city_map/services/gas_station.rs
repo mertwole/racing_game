@@ -3,6 +3,7 @@ use std::rc::Rc;
 use rand::{Rng, rngs::StdRng};
 use image::{RgbaImage};
 
+use super::Service;
 use crate::game::{Percent, player::Player};
 
 #[readonly::make]
@@ -29,10 +30,16 @@ impl GasStation {
 
     pub fn buy_gas(&mut self, amount : u32, player : &mut Player) {
         player.money -= self.gas_cost * amount as f32;
-        player.gas_level += amount;
+        player.gas_level += amount as f32;
         self.discount.0 += amount as f32 * 0.1;
         if self.discount.0 > 50.0 { self.discount.0 = 50.0; }
 
         println!("money : {} gas : {} discount : {}", player.money, player.gas_level, self.discount.0);
+    }
+}
+
+impl Service for GasStation { 
+    fn get_logo(&self) -> Rc<RgbaImage> {
+        self.logo.clone()
     }
 }
