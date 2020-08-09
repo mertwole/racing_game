@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::any::TypeId;
 
 use image::{RgbImage, RgbaImage, Rgb};
 
@@ -12,8 +13,15 @@ use crate::game::ui::{UIEvent, Screen};
 
 use super::UIScreen;
 
-mod gas_stations_modal;
-use gas_stations_modal::*;
+mod gas_station_modal;
+mod hostel_modal;
+mod shop_modal;
+mod repair_station_modal;
+
+use gas_station_modal::*;
+use hostel_modal::*;
+use shop_modal::*;
+use repair_station_modal::*;
 
 pub trait ServiceModal { 
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent>;
@@ -52,8 +60,18 @@ pub struct ServiceSelectScreen<T> where T : Service{
 }
 
 impl<T> ServiceSelectScreen<T> where T : Service {
-    pub fn new(resolution : &IVec2, font : Rc<Font>) -> ServiceSelectScreen<T> where T : Service {
-        let service_modal = Box::from(GasStationsModal::new(resolution, font.clone()));
+    pub fn new(resolution : &IVec2, font : Rc<Font>) -> ServiceSelectScreen<T> where T : Service + 'static {
+        let service_id = TypeId::of::<T>();
+
+        let service_modal = if service_id == TypeId::of::<GasStation>() {
+            Box::<dyn ServiceModal>::from(Box::from(GasStationModal::new(resolution, font.clone())))
+        } else if service_id == TypeId::of::<Hostel>() {
+            Box::<dyn ServiceModal>::from(Box::from(HostelModal::new(resolution, font.clone())))
+        } else if service_id == TypeId::of::<RepairStation>() {
+            Box::<dyn ServiceModal>::from(Box::from(RepairStationModal::new(resolution, font.clone())))
+        } else if service_id == TypeId::of::<Shop>() {
+            Box::<dyn ServiceModal>::from(Box::from(ShopModal::new(resolution, font.clone())))
+        } else { panic!("incorrect service type") };
 
         ServiceSelectScreen::<T> { 
             _type : std::marker::PhantomData::<T>,
@@ -61,7 +79,7 @@ impl<T> ServiceSelectScreen<T> where T : Service {
             service_modal, 
             state : State::SelectingService,
             game : None,
-            font : font,
+            font,
             resolution : resolution.clone()
         }
     }

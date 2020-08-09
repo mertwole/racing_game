@@ -8,17 +8,17 @@ use crate::game::city_map::services::*;
 
 use super::*;
 
-pub struct GasStationsModal{
+pub struct GasStationModal{
     buy_gas_amount : u32,
     selected_station : ServiceId,
     font : Rc<Font>,
     pub modal : ModalPage
 }
 
-impl GasStationsModal {
-    pub fn new(resolution : &IVec2, font : Rc<Font>) -> GasStationsModal {
+impl GasStationModal {
+    pub fn new(resolution : &IVec2, font : Rc<Font>) -> GasStationModal {
         let modal = ModalPage::new(IVec2::new(100, 100), IVec2::new(200, 100), Some(Rgb([150, 150, 150])));
-        GasStationsModal { 
+        GasStationModal { 
             buy_gas_amount : 0,
             selected_station : ServiceId(0),
             font,
@@ -27,7 +27,7 @@ impl GasStationsModal {
     }
 }
 
-impl ServiceModal for GasStationsModal {
+impl ServiceModal for GasStationModal {
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent> {
         let gas_station = game.city_map.get_service::<GasStation>(self.selected_station);
         let player_money = game.player.money;

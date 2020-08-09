@@ -3,7 +3,7 @@ use std::rc::Rc;
 use rand::{Rng, rngs::StdRng};
 use image::{RgbaImage};
 
-use super::Service;
+use super::*;
 use crate::game::{Percent, player::Player};
 
 #[readonly::make]
@@ -42,4 +42,7 @@ impl Service for GasStation {
     fn get_logo(&self) -> Rc<RgbaImage> {
         self.logo.clone()
     }
+
+    fn get_ref_type(&self) -> ServiceType { ServiceType::GasStation }
+    fn get_type() -> ServiceType { ServiceType::GasStation }
 }

@@ -24,7 +24,11 @@ pub enum Screen{
     Map,
     Game,
     Services,
-    GasStations
+
+    GasStations,
+    Hostels,
+    RepairStations,
+    Shops
 }
 
 pub fn create_all_screens(resolution : &IVec2) -> HashMap<Screen, Box<dyn UIScreen>>{
@@ -36,12 +40,20 @@ pub fn create_all_screens(resolution : &IVec2) -> HashMap<Screen, Box<dyn UIScre
     let map_screen = Box::from(MapScreen::new(resolution, font.clone()));
     let game_screen = Box::from(GameScreen::new(resolution, font.clone()));
     let services_screen = Box::from(ServicesScreen::new(resolution, font.clone()));
+
     let gas_stations_screen = Box::from(ServiceSelectScreen::<GasStation>::new(resolution, font.clone()));
+    let hostels_screen = Box::from(ServiceSelectScreen::<Hostel>::new(resolution, font.clone()));
+    let repair_stations_screen = Box::from(ServiceSelectScreen::<RepairStation>::new(resolution, font.clone()));
+    let shops_screen = Box::from(ServiceSelectScreen::<Shop>::new(resolution, font.clone()));
 
     ui_screens.insert(Screen::Map, map_screen);
     ui_screens.insert(Screen::Game, game_screen);
     ui_screens.insert(Screen::Services, services_screen);
+
     ui_screens.insert(Screen::GasStations, gas_stations_screen);
+    ui_screens.insert(Screen::Hostels, hostels_screen);
+    ui_screens.insert(Screen::RepairStations, repair_stations_screen);
+    ui_screens.insert(Screen::Shops, shops_screen);
 
     ui_screens
 }

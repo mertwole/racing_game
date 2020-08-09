@@ -1,5 +1,4 @@
 use std::rc::Rc;
-use std::any::TypeId;
 
 use image::RgbaImage;
 use rand::{rngs::StdRng};
@@ -22,10 +21,20 @@ pub enum ServiceAction{
 
 pub trait Service {
     fn get_logo(&self) -> Rc<RgbaImage>;
+
+    fn get_type() -> ServiceType;
+    fn get_ref_type(&self) -> ServiceType;
 }
 
 #[derive(Clone, Copy)]
 pub struct ServiceId(pub usize);
+
+pub enum ServiceType {
+    GasStation,
+    Hostel,
+    RepairStation,
+    Shop
+}
 
 #[derive(Clone)]
 pub struct CityServicesSubset {
@@ -37,17 +46,11 @@ pub struct CityServicesSubset {
 
 impl CityServicesSubset {
     pub fn get_of_type<T>(&self) -> Vec<ServiceId> where T : Sized + 'static + Service {
-        let gas_station_type_id : TypeId = TypeId::of::<GasStation>();
-        let hostel_type_id : TypeId = TypeId::of::<Hostel>();
-        let repair_station_type_id : TypeId = TypeId::of::<RepairStation>();
-        let shop_type_id : TypeId = TypeId::of::<Shop>();
-
-        match TypeId::of::<T>() {
-            gas_station_type_id => { self.gas_station_ids.clone() }
-            hostel_type_id => { self.hostel_ids.clone() }
-            repair_station_type_id => { self.repair_station_ids.clone() }
-            shop_type_id => { self.shop_ids.clone() }
-            _ => { panic!("Incorrect service type!"); }
+        match T::get_type() {
+            ServiceType::GasStation => { self.gas_station_ids.clone() }
+            ServiceType::Hostel => { self.hostel_ids.clone() }
+            ServiceType::RepairStation => { self.repair_station_ids.clone() }
+            ServiceType::Shop => { self.shop_ids.clone() }
         }
     }   
 }
@@ -98,19 +101,13 @@ impl Services {
     }  
     
     pub fn get_service<T>(&self, id : ServiceId) -> &T where T : Sized + 'static + Service {
-        let gas_station_type_id : TypeId = TypeId::of::<GasStation>();
-        let hostel_type_id : TypeId = TypeId::of::<Hostel>();
-        let repair_station_type_id : TypeId = TypeId::of::<RepairStation>();
-        let shop_type_id : TypeId = TypeId::of::<Shop>();
-
-        unsafe { 
-            &*match TypeId::of::<T>() {
-                gas_station_type_id => { &self.gas_stations[id.0] as *const GasStation as *const T}
-                hostel_type_id => { &self.hostels[id.0] as *const Hostel as *const T}
-                repair_station_type_id => { &self.repair_stations[id.0] as *const RepairStation as *const T}
-                shop_type_id => { &self.shops[id.0] as *const Shop as *const T}
-                _ => { panic!("Incorrect service type!"); }
-            } 
+        unsafe {
+            &*match T::get_type() {
+                ServiceType::GasStation => { &self.gas_stations[id.0] as *const GasStation as *const T }
+                ServiceType::Hostel => { &self.hostels[id.0] as *const Hostel as *const T }
+                ServiceType::RepairStation => { &self.repair_stations[id.0] as *const RepairStation as *const T }
+                ServiceType::Shop => { &self.shops[id.0] as *const Shop as *const T }
+            }
         }
     }
 }
