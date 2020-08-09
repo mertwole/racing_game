@@ -1,33 +1,36 @@
 use image::{RgbaImage, RgbImage};
 
 use super::*;
+use crate::engine::ui::*;
 use crate::engine::common::ImageOps;
 
-pub struct MenuItem<E : Clone> {
+pub struct UISelectorItem<E : Clone> {
     control : Box<dyn UIControl>,
     control_properties : ControlProperties,
     event : E
 }
 
-impl<E : Clone> MenuItem<E> {
-    pub fn new(control : Box<dyn UIControl>, control_properties : ControlProperties, event : E) -> MenuItem<E> {
-        MenuItem { control, event, control_properties }
+impl<E : Clone> UISelectorItem<E> {
+    pub fn new(control : Box<dyn UIControl>, control_properties : ControlProperties, event : E) -> UISelectorItem<E> {
+        UISelectorItem { control, event, control_properties }
     } 
 }
 
-pub struct SelectorMenu<E : Clone> {
+pub struct UISelector<E : Clone> {
     page : UIPage,
     control_events : Vec<Box<E>>,
     pointer_positions : Vec<IVec2>,
     pointer_img : RgbaImage,
-    selected_item : usize
+    selected_item : usize,
+    resolution : IVec2
 }
 
-impl<E : Clone> SelectorMenu<E> {
-    pub fn new(items : Vec<MenuItem<E>>, pointer_image : RgbaImage, resolution : IVec2) -> SelectorMenu<E> {
+// Fullscreen menu overlays UI.
+impl<E : Clone> UISelector<E> {
+    pub fn new(items : Vec<UISelectorItem<E>>, pointer_image : RgbaImage, resolution : IVec2) -> UISelector<E> {
         let mut pointer_positions : Vec<IVec2> = Vec::with_capacity(items.len());
         let pointer_offset = IVec2::new(-(pointer_image.width() as isize), 0);
-        let mut page = UIPage::new(resolution, None);
+        let mut page = UIPage::new(resolution.clone(), None);
         let mut control_events : Vec<Box<E>> = Vec::with_capacity(items.len());
 
         for item in items {
@@ -40,7 +43,7 @@ impl<E : Clone> SelectorMenu<E> {
             pointer_positions.push(pointer_pos);
         }
 
-        SelectorMenu { page, control_events, pointer_positions, pointer_img : pointer_image, selected_item : 0 }
+        UISelector { page, control_events, pointer_positions, pointer_img : pointer_image, selected_item : 0, resolution }
     }
 
     pub fn select_next_in_direction(&mut self, direction : &IVec2) {
@@ -54,11 +57,17 @@ impl<E : Clone> SelectorMenu<E> {
     pub fn select_current(&mut self) -> E {
         self.control_events[self.selected_item].as_ref().clone()
     }
+}
 
-    pub fn render(&self, buffer : &mut RgbImage) {
+impl<E> UIControl for UISelector<E> where E : Clone {
+    fn draw(&self, buffer : &mut RgbImage) {
         self.page.draw(buffer);
 
         let pointer_pos = self.pointer_positions[self.selected_item];
         ImageOps::overlay_rgba(buffer, &self.pointer_img, &pointer_pos);
     }
+
+    fn set_position(&mut self, position : IVec2) { }   
+    fn get_position(&self) -> IVec2 { IVec2::zero() }
+    fn get_size(&self) -> IVec2 { self.resolution.clone() }   
 }

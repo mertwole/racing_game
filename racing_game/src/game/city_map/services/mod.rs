@@ -17,7 +17,8 @@ pub use repair_station::*;
 pub use shop::*;
 
 pub enum ServiceAction{
-    BuyGas(u32)
+    BuyGas(u32),
+    RestInHostel(u32)
 }
 
 pub trait Service {
@@ -55,16 +56,22 @@ pub struct Services {
 impl Services {
     pub fn generate(rng : &mut StdRng) -> Services {
         let mut gas_stations = Vec::new();
-        let gs0_logo = Game::load_image_rgba("logo0.png");
-        let gas_station0 = GasStation::generate(gs0_logo, rng);
-        gas_stations.push(Box::<dyn Service>::from(Box::from(gas_station0)));
-        let gs1_logo = Game::load_image_rgba("logo1.png");
-        let gas_station1 = GasStation::generate(gs1_logo, rng);
-        gas_stations.push(Box::<dyn Service>::from(Box::from(gas_station1)));
+        for i in 0..7 {
+            let gs_logo = Game::load_image_rgba(&*format!("logos/gas_stations/logo{}.png", i));
+            let gs = GasStation::generate(gs_logo, rng);
+            gas_stations.push(Box::<dyn Service>::from(Box::from(gs)));
+        }
+
+        let mut hostels = Vec::new();
+        for i in 0..7 {
+            let h_logo = Game::load_image_rgba(&*format!("logos/hostels/logo{}.png", i));
+            let h = Hostel::generate(h_logo, rng);
+            hostels.push(Box::<dyn Service>::from(Box::from(h)));
+        }
 
         let mut services = HashMap::new();
         services.insert(ServiceType::GasStation, gas_stations);
-        services.insert(ServiceType::Hostel, Vec::new());
+        services.insert(ServiceType::Hostel, hostels);
         services.insert(ServiceType::RepairStation, Vec::new());
         services.insert(ServiceType::Shop, Vec::new());
 
@@ -76,8 +83,8 @@ impl Services {
 
         for _i in 0..city_count {
             let mut service_ids = HashMap::new();
-            service_ids.insert(ServiceType::GasStation, vec![ServiceId(0), ServiceId(1)]);
-            service_ids.insert(ServiceType::Hostel, Vec::new());
+            service_ids.insert(ServiceType::GasStation, vec![ServiceId(0), ServiceId(1), ServiceId(2), ServiceId(3), ServiceId(4), ServiceId(5), ServiceId(6)]);
+            service_ids.insert(ServiceType::Hostel, vec![ServiceId(0), ServiceId(1), ServiceId(2), ServiceId(3), ServiceId(4), ServiceId(5), ServiceId(6)]);
             service_ids.insert(ServiceType::RepairStation, Vec::new());
             service_ids.insert(ServiceType::Shop, Vec::new());
 
@@ -90,6 +97,7 @@ impl Services {
     pub fn process_action(&mut self, id : ServiceId, action : ServiceAction, player : &mut Player) {
         match action {
             ServiceAction::BuyGas(amount) => { self.get_service_mut::<GasStation>(id).buy_gas(amount, player); }
+            ServiceAction::RestInHostel(option_id) => { self.get_service_mut::<Hostel>(id).rest(option_id, player); }
         }
     }  
 

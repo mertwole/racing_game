@@ -60,6 +60,13 @@ pub enum InputEvent{
 #[derive(Clone)]
 pub struct Percent(f32);
 
+#[derive(Clone)]
+pub struct Time { pub hr : u32, pub min : u32 }
+
+impl Time {
+    pub fn new(hr : u32, min : u32) -> Time { Time { hr, min } }
+}
+
 impl Game {
     pub fn new() -> Game {
         let screen_width = 640;

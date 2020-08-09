@@ -28,6 +28,10 @@ impl GasStationModal {
 }
 
 impl ServiceModal for GasStationModal {
+    fn opened(&mut self, game : &Game) {
+        
+    }
+    
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent> {
         let gas_station = game.city_map.get_service::<GasStation>(self.selected_station);
         let player_money = game.player.money;

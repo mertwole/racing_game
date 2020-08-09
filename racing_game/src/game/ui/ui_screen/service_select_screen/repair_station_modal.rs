@@ -28,6 +28,10 @@ impl RepairStationModal {
 }
 
 impl ServiceModal for RepairStationModal {
+    fn opened(&mut self, game : &Game) {
+        
+    }
+    
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent> {
         Vec::new()
     }

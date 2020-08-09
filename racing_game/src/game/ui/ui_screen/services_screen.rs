@@ -5,7 +5,6 @@ use image::{RgbImage, RgbaImage, Rgb};
 use crate::engine::common::{IVec2, ImageOps};
 use crate::engine::ui::font::*;
 use crate::engine::ui::*;
-use crate::engine::ui::selector_menu::*;
 use crate::game::{Game, InputEvent, EventType};
 use crate::game::ui::{UIEvent, Screen};
 
@@ -22,17 +21,17 @@ enum MenuEvents {
 }
 
 pub struct ServicesScreen{
-    menu : SelectorMenu<MenuEvents>
+    menu : UISelector<MenuEvents>
 }
 
 impl ServicesScreen {
     pub fn new(resolution : &IVec2, font : Rc<Font>) -> ServicesScreen {
         let pointer_image = Game::load_image_rgba("ui/pointer.png");
 
-        let mut menu_items : Vec<MenuItem<MenuEvents>> = Vec::new();
+        let mut menu_items : Vec<UISelectorItem<MenuEvents>> = Vec::new();
 
         // Gas stations.
-        menu_items.push(MenuItem::new(
+        menu_items.push(UISelectorItem::new(
             Box::from(UIText::new(font.clone(), String::from("GAS STATION"))), 
             ControlProperties { 
                 pivot : Pivot::LeftTop, 
@@ -42,7 +41,7 @@ impl ServicesScreen {
             MenuEvents::GasStations)
         );
         // Hostels.
-        menu_items.push(MenuItem::new(
+        menu_items.push(UISelectorItem::new(
             Box::from(UIText::new(font.clone(), String::from("HOSTEL"))), 
             ControlProperties { 
                 pivot : Pivot::LeftTop, 
@@ -52,7 +51,7 @@ impl ServicesScreen {
             MenuEvents::Hostels)
         );
         // Repair stations.
-        menu_items.push(MenuItem::new(
+        menu_items.push(UISelectorItem::new(
             Box::from(UIText::new(font.clone(), String::from("REPAIR STATION"))), 
             ControlProperties { 
                 pivot : Pivot::LeftTop, 
@@ -62,7 +61,7 @@ impl ServicesScreen {
             MenuEvents::RepairStations)
         );
         // Shops.
-        menu_items.push(MenuItem::new(
+        menu_items.push(UISelectorItem::new(
             Box::from(UIText::new(font.clone(), String::from("SHOP"))), 
             ControlProperties { 
                 pivot : Pivot::LeftTop, 
@@ -72,7 +71,7 @@ impl ServicesScreen {
             MenuEvents::Shops)
         );
         // Next.
-        menu_items.push(MenuItem::new(
+        menu_items.push(UISelectorItem::new(
             Box::from(UIText::new(font.clone(), String::from("NEXT"))), 
             ControlProperties { 
                 pivot : Pivot::LeftBottom, 
@@ -82,7 +81,7 @@ impl ServicesScreen {
             MenuEvents::Next)
         );
 
-        let menu = SelectorMenu::new(menu_items, pointer_image, resolution.clone());
+        let menu = UISelector::new(menu_items, pointer_image, resolution.clone());
 
         ServicesScreen { menu }
     }
@@ -117,6 +116,6 @@ impl UIScreen for ServicesScreen {
     }
 
     fn render(&self, buffer : &mut RgbImage) {
-        self.menu.render(buffer);
+        self.menu.draw(buffer);
     }
 }

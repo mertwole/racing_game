@@ -9,9 +9,9 @@ use crate::game::city_map::services::*;
 use super::*;
 
 pub struct HostelModal {
-    buy_gas_amount : u32,
     selected_service : ServiceId,
     font : Rc<Font>,
+    resolution : IVec2,
     pub modal : ModalPage
 }
 
@@ -19,17 +19,79 @@ impl HostelModal {
     pub fn new(resolution : &IVec2, font : Rc<Font>) -> HostelModal {
         let modal = ModalPage::new(IVec2::new(100, 100), IVec2::new(200, 100), Some(Rgb([150, 150, 150])));
         HostelModal { 
-            buy_gas_amount : 0,
             selected_service : ServiceId(0),
             font,
-            modal
+            modal,
+            resolution : resolution.clone()
         }
     }
 }
 
+#[derive(Clone)]
+struct OptionSelect(usize);
+
 impl ServiceModal for HostelModal {
+    fn opened(&mut self, game : &Game) {
+        let pointer_image = Game::load_image_rgba("ui/pointer.png");
+        let mut menu_items = Vec::new();
+
+        let hostel = game.city_map.get_service::<Hostel>(self.selected_service);
+        for i in 0..hostel.options.len() {
+            let time = hostel.options[i].time.clone();
+            let cost = hostel.options[i].cost;
+            println!("{}", format!("REST {}H. {}M. FOR {}$", time.hr, time.min, cost));
+            menu_items.push(UISelectorItem::new(
+                Box::from(UIText::new(self.font.clone(), format!("REST {}H. {}M. FOR {}$", time.hr, time.min, cost))),
+                ControlProperties::new(IVec2::new(0, -(i as isize) * 20), Pivot::Center, Binding::Center),
+                OptionSelect(i)
+            ));
+        }
+
+        let option_selector = UISelector::<OptionSelect>::new(menu_items, pointer_image, self.resolution.clone());
+        self.modal.add_control(Box::from(option_selector), ControlProperties { position : IVec2::zero(), pivot : Pivot::LeftBottom, binding : Binding::LeftBottom });
+    }   
+
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent> {
-        Vec::new()
+        let hostel = game.city_map.get_service::<Hostel>(self.selected_service);
+        let player_money = game.player.money;
+
+        for (event, event_type) in input {
+            match (event, event_type) {
+                (InputEvent::UIDown, EventType::Pressed) => { 
+                    unsafe {
+                        let ui_select = &mut *(self.modal.get_control_mut(0) as *mut dyn UIControl as *mut UISelector<OptionSelect>);
+                        ui_select.select_next_in_direction(&IVec2::new(0, 1));
+                    }
+                }
+                (InputEvent::UIUp, EventType::Pressed) => { 
+                    unsafe {
+                        let ui_select = &mut *(self.modal.get_control_mut(0) as *mut dyn UIControl as *mut UISelector<OptionSelect>);
+                        ui_select.select_next_in_direction(&IVec2::new(0, -1));
+                    }
+                }
+                (InputEvent::UISelect, EventType::Pressed) => { 
+                    let selected = unsafe {
+                        let ui_select = &mut *(self.modal.get_control_mut(0) as *mut dyn UIControl as *mut UISelector<OptionSelect>);
+                        ui_select.select_current()
+                    };
+
+                    return vec![
+                        ServiceModalEvent::UIEvent(
+                            UIEvent::ServiceAction(self.selected_service, ServiceAction::RestInHostel(selected.0 as u32))
+                        )
+                    ]; 
+                }
+                (InputEvent::UIBack, EventType::Pressed) => { 
+                    self.modal.start_anim_fold(1000.0);
+                    return vec![ServiceModalEvent::Close];
+                }
+                _ => { }
+            }
+        }
+
+        self.modal.update(delta_time);
+
+        return Vec::new();
     }
 
     fn select_service(&mut self, id : ServiceId) {

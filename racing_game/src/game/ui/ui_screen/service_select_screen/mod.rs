@@ -6,7 +6,6 @@ use image::{RgbImage, RgbaImage, Rgb};
 use crate::engine::common::{IVec2, Math};
 use crate::engine::ui::font::*;
 use crate::engine::ui::*;
-use crate::engine::ui::selector_menu::*;
 use crate::game::*;
 use crate::game::city_map::services::*;
 use crate::game::ui::{UIEvent, Screen};
@@ -24,6 +23,7 @@ use shop_modal::*;
 use repair_station_modal::*;
 
 pub trait ServiceModal { 
+    fn opened(&mut self, game : &Game);
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent>;
     fn select_service(&mut self, id : ServiceId);
     fn modal(&self) -> &ModalPage;
@@ -51,7 +51,7 @@ enum State{
 
 pub struct ServiceSelectScreen<T> where T : Service{
     _type : std::marker::PhantomData<T>,
-    menu : Option<SelectorMenu<MenuEvents>>,
+    menu : Option<UISelector<MenuEvents>>,
     service_modal : Box<dyn ServiceModal>,
     game : Option<Rc<Game>>,
     state : State,
@@ -96,7 +96,7 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
         for id in service_ids {
             let service = self.game.as_ref().unwrap().city_map.get_service::<T>(id);
             let logo = UIImage::new(service.get_logo());
-            let station_item = MenuItem::new(
+            let station_item = UISelectorItem::new(
                 Box::from(logo), 
                 ControlProperties { 
                     pivot : Pivot::LeftTop, 
@@ -112,7 +112,7 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
         }
 
         let back_label = UIText::new(self.font.clone(), String::from("BACK"));
-        let back_item = MenuItem::new(
+        let back_item = UISelectorItem::new(
             Box::from(back_label), 
             ControlProperties { 
                 pivot : Pivot::LeftBottom, 
@@ -125,7 +125,7 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
         menu_items.push(back_item);
 
         let pointer_image = Game::load_image_rgba("ui/pointer.png");
-        self.menu = Some(SelectorMenu::new(menu_items, pointer_image, self.resolution.clone()));
+        self.menu = Some(UISelector::new(menu_items, pointer_image, self.resolution.clone()));
     }
 
     fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
@@ -170,10 +170,15 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
                 }
             }
             State::OpeningModalWindow => {
-                if self.service_modal.modal().anim_state == ModalAnim::Void { self.state = State::ActionsInService; }
+                if self.service_modal.modal().anim_state == ModalAnim::Void { 
+                    self.service_modal.opened(self.game.as_ref().unwrap());
+                    self.state = State::ActionsInService; 
+                }
             }
             State::ClosingModalWindow => {
-                if self.service_modal.modal().anim_state == ModalAnim::Void { self.state = State::SelectingService; }
+                if self.service_modal.modal().anim_state == ModalAnim::Void { 
+                    self.state = State::SelectingService; 
+                }
             }
 
             _ => { }
@@ -183,7 +188,7 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
     }  
 
     fn render(&self, buffer : &mut RgbImage) {
-        self.menu.as_ref().unwrap().render(buffer);
+        self.menu.as_ref().unwrap().draw(buffer);
         self.service_modal.modal().draw(buffer);
     }
 }

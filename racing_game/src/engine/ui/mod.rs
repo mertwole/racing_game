@@ -3,12 +3,9 @@ use image::{RgbImage, Rgb};
 use super::common::{IVec2, Vec2};
 
 mod ui_controls;
-pub use ui_controls::{UIImage, UIText};
-use ui_controls::UIControl;
+pub use ui_controls::*;
 
 pub mod font;
-
-pub mod selector_menu;
 
 pub enum Pivot {
     Center,
@@ -30,6 +27,12 @@ pub struct ControlProperties {
     pub pivot : Pivot,
     pub binding : Binding,
     pub position : IVec2
+}
+
+impl ControlProperties {
+    pub fn new(position : IVec2, pivot : Pivot, binding : Binding) -> ControlProperties {
+        ControlProperties { position, pivot, binding }
+    }
 }
 
 #[readonly::make]
@@ -68,7 +71,7 @@ impl UIPage {
 
         self.controls.push(control);
     }
-    
+
     pub fn clear_controls(&mut self) {
         self.controls = Vec::new();
     }
@@ -140,6 +143,14 @@ impl ModalPage {
 
     pub fn clear_controls(&mut self) { 
         self.page.clear_controls();
+    }
+
+    pub fn get_control_mut(&mut self, id : usize) -> &mut dyn UIControl {
+        self.page.controls[id].as_mut()
+    }
+
+    pub fn get_control(&mut self, id : usize) -> &dyn UIControl {
+        self.page.controls[id].as_ref()
     }
 
     pub fn start_anim_unfold(&mut self, anim_speed : f32) {
