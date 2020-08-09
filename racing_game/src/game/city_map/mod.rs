@@ -326,8 +326,8 @@ impl CityMap {
         panic!("incorrect road!");
     }
 
-    pub fn get_current_city_services_subset(&self) -> CityServicesSubset {
-        self.cities[self.current_city_id].services.clone()
+    pub fn get_current_city_services_subset(&self) -> &CityServicesSubset {
+        &self.cities[self.current_city_id].services
     }
 
     pub fn get_service<T>(&self, id : ServiceId) -> &T where T : Sized + 'static + Service {
