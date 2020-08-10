@@ -1,10 +1,9 @@
 use rand::{rngs::StdRng, Rng};
 
 use crate::engine::billboards::*;
+use crate::engine::traffic::*;
 use crate::engine::road::road_data::*;
-
-//mod traffic;
-//pub use traffic::*;
+use crate::game::Game;
 
 #[readonly::make]
 pub struct RoadPath {
@@ -18,7 +17,8 @@ pub struct RoadPath {
 pub struct RoadPathMeta{
     pub length : f32,
     pub roads_data : Vec<RoadData>,
-    pub billboards : Billboards
+    pub billboards : Billboards,
+    pub traffic : Traffic
 }
 
 impl RoadPath {
@@ -59,34 +59,16 @@ impl RoadPath {
         let mut billboards = Billboards::new();
         billboards.add_static(billboard_factories[0].construct(40.0, 1.1));
         billboards.add_static(billboard_factories[0].construct(60.0, -1.1));
-
         billboards.add_static(billboard_factories[0].construct(80.0, 1.1));
         billboards.add_static(billboard_factories[0].construct(83.0, 1.1));
         billboards.add_static(billboard_factories[0].construct(86.0, 1.1));
         billboards.add_static(billboard_factories[0].construct(89.0, 1.1));
-        billboards.add_static(billboard_factories[0].construct(92.0, 1.1));
-        billboards.add_static(billboard_factories[0].construct(95.0, 1.1));
-        billboards.add_static(billboard_factories[0].construct(98.0, 1.1));
-        billboards.add_static(billboard_factories[0].construct(101.0, 1.1));
-        billboards.add_static(billboard_factories[0].construct(104.0, 1.1));
-        billboards.add_static(billboard_factories[0].construct(107.0, 1.1));
-        billboards.add_static(billboard_factories[0].construct(110.0, 1.1));
-        billboards.add_static(billboard_factories[0].construct(113.0, 1.1));
 
-        billboards.add_static(billboard_factories[0].construct(80.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(83.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(86.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(89.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(92.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(95.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(98.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(101.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(104.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(107.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(110.0, -1.1));
-        billboards.add_static(billboard_factories[0].construct(113.0, -1.1));
+        let mut traffic = Traffic::new();
+        let traffic_car_billboard = BillboardFactory::new(&Game::load_image_rgba("test_spritesheet.png"), Game::load_file("test_spritesheet.meta"));
+        traffic.add_car(traffic_car_billboard.construct(10.0, 0.0), -1.0, &mut billboards);
 
-        let meta = RoadPathMeta { roads_data, length, billboards };
+        let meta = RoadPathMeta { roads_data, length, billboards, traffic };
         self.meta = Some(meta);
     }
 
