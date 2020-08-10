@@ -6,6 +6,7 @@ use crate::engine::billboards::*;
 use crate::engine::road::*;
 use crate::engine::horizon::*;
 use crate::engine::camera::*;
+use crate::engine::traffic::*;
 use crate::engine::common::{IVec2, ImageOps};
 use super::{EventType, InputEvent};
 
@@ -17,6 +18,7 @@ pub struct Ride {
     billboards : Billboards,
     length : f32,
     horizon : Horizon,
+    traffic : Traffic,
     camera : Camera,
     active : bool,
 
@@ -36,6 +38,11 @@ impl Ride {
         let car_img = Game::load_image_rgba("ferrari.png");
         let car_width = car_img.width() as f32 / SCREEN_RESOLUTION.x as f32;
         let car = Car::new(car_img, car_width, 5.0, 1.0, 10.0, 10.0, 1.5);
+
+        let mut traffic = Traffic::new();
+        let traffic_car_billboard = BillboardFactory::new(&Game::load_image_rgba("test_spritesheet.png"), Game::load_file("test_spritesheet.meta"));
+        traffic.add_car(traffic_car_billboard.construct(10.0, 0.0), 1.0);
+
         Ride { 
             roads : Vec::new(),
             billboards : Billboards::new(), 
@@ -44,7 +51,8 @@ impl Ride {
             camera,
             length : 0.0, 
             active : false,
-            player : None
+            player : None,
+            traffic
         }
     }
 
@@ -73,6 +81,8 @@ impl Ride {
     pub fn update(&mut self, delta_time : f32) -> Vec<RideEvent> {
         if !self.active { return Vec::new(); } 
         self.car.update(delta_time);
+
+        self.traffic.update(&self.camera, delta_time);
 
         let mut events : Vec<RideEvent> = Vec::new();
 
@@ -110,6 +120,7 @@ impl Ride {
         self.horizon.render(100, 0.0, buffer);
         for road in &self.roads { road.render_from_y_data(buffer, &self.camera); }
         self.car.render(buffer);
-        self.billboards.render_all(&self.camera, &self.roads[0].y_data, buffer);
+        //self.billboards.render_all(&self.camera, &self.roads[0].y_data, buffer);
+        self.traffic.render(&self.camera, &self.roads[0].y_data, buffer);
     }
 }
