@@ -55,6 +55,8 @@ impl Ride {
 
         self.player = Some(player);
 
+        self.car.reset();
+
         self.billboards = ride_data.billboards;
         self.roads.clear();
         for road_data in ride_data.roads_data {

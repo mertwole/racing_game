@@ -41,7 +41,15 @@ impl Car {
         }
     }
 
-    pub(super) fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
+    pub fn reset(&mut self) {
+        self.input_horz = None;
+        self.input_vert = None;
+        self.prev_input_horz = None;
+        self.speed = 0.0;
+        self.x_pos = 0.0;
+    }
+
+    pub fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
         for (event, event_type) in input {
             match event_type {
                 EventType::Pressed => { 

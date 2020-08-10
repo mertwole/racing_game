@@ -3,6 +3,7 @@ pub mod common;
 pub mod road;
 pub mod billboards;
 pub mod horizon;
+pub mod traffic;
 
 pub mod render;
 pub mod window;
