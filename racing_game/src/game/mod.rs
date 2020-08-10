@@ -26,11 +26,9 @@ mod ui;
 use ui::*;
 
 pub const RESOURCES_DIR : Dir = include_dir!("./resources");
+pub const SCREEN_RESOLUTION : IVec2 = IVec2 { x : 640, y : 360 };
 
 pub struct Game {
-    screen_width : u32,
-    screen_height : u32,
-
     window : Window,
     render : Render,
     input : Input<InputEvent>,
@@ -43,11 +41,12 @@ pub struct Game {
     ride : Ride 
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum InputEvent{
-    Gas,
-    Left,
-    Right,
+    CarGas,
+    CarBrake,
+    CarLeft,
+    CarRight,
 
     UIRight,
     UILeft,
@@ -69,16 +68,14 @@ impl Time {
 
 impl Game {
     pub fn new() -> Game {
-        let screen_width = 640;
-        let screen_height = 360;
-
-        let window = Window::open(WindowParameters { width : screen_width, height : screen_height, title : String::from("title")});
-        let render = Render::new(screen_width, screen_height);
+        let window = Window::open(WindowParameters { width : SCREEN_RESOLUTION.x as u32, height : SCREEN_RESOLUTION.y as u32, title : String::from("title")});
+        let render = Render::new(SCREEN_RESOLUTION.x as u32, SCREEN_RESOLUTION.y as u32);
 
         let mut input = Input::<InputEvent>::new();
-        input.bind_action(InputEvent::Gas, Key::Up);
-        input.bind_action(InputEvent::Left, Key::Left);
-        input.bind_action(InputEvent::Right, Key::Right);
+        input.bind_action(InputEvent::CarGas, Key::Up);
+        input.bind_action(InputEvent::CarLeft, Key::Left);
+        input.bind_action(InputEvent::CarRight, Key::Right);
+        input.bind_action(InputEvent::CarBrake, Key::Down);
 
         input.bind_action(InputEvent::UIUp, Key::Up);
         input.bind_action(InputEvent::UIDown, Key::Down);
@@ -98,11 +95,11 @@ impl Game {
         
         let ride = Ride::new();
 
-        let ui = UI::new(&IVec2::new(screen_width as isize, screen_height as isize));
+        let ui = UI::new(&SCREEN_RESOLUTION);
 
         let player = Player::new();
 
-        Game { window, render, input, screen_width, screen_height, city_map, ride, ui, player }
+        Game { window, render, input, city_map, ride, ui, player }
     }
 }
 
@@ -121,7 +118,7 @@ impl Game {
             
             self.update(delta_time as f32);
 
-            let render_buffer = RgbImage::new(self.screen_width, self.screen_height);
+            let render_buffer = RgbImage::new(SCREEN_RESOLUTION.x as u32, SCREEN_RESOLUTION.y as u32);
             if self.window.should_close() { break; }
             self.render(render_buffer);
         }
