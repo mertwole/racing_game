@@ -1,6 +1,6 @@
 use crate::image::{ RgbImage };
 
-use super::road::RoadYData;
+use super::track::YData;
 use super::camera::Camera;
 
 mod billboard;
@@ -64,7 +64,7 @@ impl Billboards {
         return billboards;
     }
 
-    pub fn render_all(&self, camera : &Camera, y_data : &Vec<RoadYData>, buffer : &mut RgbImage) {
+    pub fn render_all(&self, camera : &Camera, y_data : &Vec<YData>, buffer : &mut RgbImage) {
         let billboards = self.get_sorted_billboards();
 
         let mut global_distance;

@@ -3,7 +3,7 @@ use image::{RgbImage, RgbaImage};
 use super::city_map::road_path::RoadPathMeta;
 use super::{Game, Player, SCREEN_RESOLUTION};
 use crate::engine::billboards::*;
-use crate::engine::road::*;
+use crate::engine::track::*;
 use crate::engine::horizon::*;
 use crate::engine::camera::*;
 use crate::engine::traffic::*;
@@ -14,7 +14,7 @@ mod car;
 use car::*;
 
 pub struct Ride {
-    roads : Vec<Road>,
+    track : Option<Track>,
     billboards : Billboards,
     length : f32,
     horizon : Horizon,
@@ -40,7 +40,7 @@ impl Ride {
         let car = Car::new(car_img, car_width, 5.0, 1.0, 10.0, 10.0, 1.5);
 
         Ride { 
-            roads : Vec::new(),
+            track : None,
             billboards : Billboards::new(), 
             car, 
             horizon, 
@@ -63,10 +63,7 @@ impl Ride {
         self.car.reset();
 
         self.billboards = ride_data.billboards;
-        self.roads.clear();
-        for road_data in ride_data.roads_data {
-            self.roads.push(Road::new(Game::load_image_rgb("road_tex.png"), road_data));
-        }
+        self.track = Some(Track::new(ride_data.track_data));
     }
 
     pub fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
@@ -83,16 +80,14 @@ impl Ride {
 
         let mut events : Vec<RideEvent> = Vec::new();
 
-        for road in &mut self.roads {
-            road.compute_y_data(&self.camera, SCREEN_RESOLUTION.y as u32);
-        }
+        self.track.as_mut().unwrap().compute_y_data(&self.camera, SCREEN_RESOLUTION.y as u32);
 
         self.player.as_mut().unwrap().gas_level -= self.car.speed * delta_time;
         events.push(RideEvent::ChangePlayer(self.player.as_ref().unwrap().clone()));
 
-        self.car.x_pos -= self.roads[0].get_horz_speed(&self.camera) * self.car.speed * delta_time * 5.0;
+        self.car.x_pos -= self.track.as_ref().unwrap().get_horz_speed(&self.camera) * self.car.speed * delta_time * 5.0;
 
-        let road_bounds = self.roads[0].get_bounds();
+        let road_bounds = self.track.as_ref().unwrap().get_bounds();
         if self.car.x_pos - self.car.width * 0.5 < road_bounds.0 {
             println!("out of bounds!");
         }
@@ -115,8 +110,8 @@ impl Ride {
         if !self.active { return; } 
         
         self.horizon.render(100, 0.0, buffer);
-        for road in &self.roads { road.render_from_y_data(buffer, &self.camera); }
-        self.billboards.render_all(&self.camera, &self.roads[0].y_data, buffer);
+        self.track.as_ref().unwrap().render_from_y_data(buffer, &self.camera);
+        self.billboards.render_all(&self.camera, &self.track.as_ref().unwrap().y_data, buffer);
         self.car.render(buffer);
     }
 }

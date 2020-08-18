@@ -1,4 +1,5 @@
 use crate::engine::common::*;
+use super::road::Road;
 
 #[derive(Clone)]
 pub struct Heel{
@@ -22,19 +23,18 @@ impl Heel {
 }
 
 #[derive(Clone)]
-pub struct RoadData {
-    track_length : f32,
-    start_distance : f32,
-    heels : Vec<Heel>,
-    curvatures : Vec<Curvature>
-
-}
-
-#[derive(Clone)]
 pub struct Curvature {
     pub start : f32,
     pub end : f32,
     pub strength : f32
+}
+
+#[derive(Clone)]
+pub struct TrackData {
+    length : f32,
+    heels : Vec<Heel>,
+    curvatures : Vec<Curvature>,
+    pub(super) roads : Vec<Road>
 }
 
 pub enum OffsetMode {
@@ -42,9 +42,9 @@ pub enum OffsetMode {
     AsIs
 }
 
-impl RoadData {
-    pub fn new(start_distance : f32, length : f32, curvatures : Vec<Curvature>, heels : Vec<Heel>) -> RoadData {
-        RoadData { track_length : length, start_distance, heels, curvatures }
+impl TrackData {
+    pub fn new(length : f32, curvatures : Vec<Curvature>, heels : Vec<Heel>, roads : Vec<Road>) -> TrackData {
+        TrackData { length, heels, curvatures, roads }
     }
 
     pub fn get_segment_offset(&self, camera_road_distance : f32, road_distance : f32) -> OffsetMode {
@@ -68,8 +68,8 @@ impl RoadData {
         0.0
     }
 
-    pub fn is_visible(&self, vis_road_dist : f32) -> bool {
-        vis_road_dist >= self.start_distance && vis_road_dist <= self.start_distance + self.track_length
+    pub fn is_visible(&self, road_distance : f32) -> bool {
+        self.length >= road_distance
     }
 
     pub fn get_camera_pitch_delta(&self, camera_road_dist : f32) -> f32 {

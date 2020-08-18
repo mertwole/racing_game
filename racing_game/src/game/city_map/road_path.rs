@@ -1,8 +1,10 @@
+use std::rc::Rc;
+
 use rand::{rngs::StdRng, Rng};
 
 use crate::engine::billboards::*;
 use crate::engine::traffic::*;
-use crate::engine::road::road_data::*;
+use crate::engine::track::*;
 use crate::game::Game;
 
 #[readonly::make]
@@ -16,7 +18,7 @@ pub struct RoadPath {
 #[derive(Clone)]
 pub struct RoadPathMeta{
     pub length : f32,
-    pub roads_data : Vec<RoadData>,
+    pub track_data : TrackData,
     pub billboards : Billboards,
     pub traffic : Traffic
 }
@@ -51,10 +53,13 @@ impl RoadPath {
             //Heel::new(50.0, 100.0, 0.003, 0.0),
             //Heel::new(75.0, 100.0, -0.001, 0.0)
         ];
-
-        let road_data = RoadData::new(0.0, length, curvatures, heels);
-
-        let roads_data = vec![road_data];
+        let mut roads = Vec::new();
+        roads.push(Road::new(
+            1.0, 
+            vec![KeyPoint::new(0.0, 0.0), KeyPoint::new(10.0, 0.0), KeyPoint::new(30.0, 1.0), KeyPoint::new(50.0, 0.0), KeyPoint::new(length, 0.0)], 
+            Rc::from(Game::load_image_rgb("road_tex.png"))
+        ));
+        let track_data = TrackData::new(length, curvatures, heels, roads);
         
         let mut billboards = Billboards::new();
         billboards.add_static(billboard_factories[0].construct(40.0, 1.1));
@@ -68,7 +73,7 @@ impl RoadPath {
         let traffic_car_billboard = BillboardFactory::new(&Game::load_image_rgba("test_spritesheet.png"), Game::load_file("test_spritesheet.meta"));
         traffic.add_car(traffic_car_billboard.construct(10.0, 0.0), -1.0, &mut billboards);
 
-        let meta = RoadPathMeta { roads_data, length, billboards, traffic };
+        let meta = RoadPathMeta { track_data : track_data, length, billboards, traffic };
         self.meta = Some(meta);
     }
 
