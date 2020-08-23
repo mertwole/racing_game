@@ -87,13 +87,10 @@ impl Ride {
 
         self.car.x_pos -= self.track.as_ref().unwrap().get_horz_speed(&self.camera) * self.car.speed * delta_time * 5.0;
 
-        let road_bounds = self.track.as_ref().unwrap().get_bounds();
-        if self.car.x_pos - self.car.width * 0.5 < road_bounds.0 {
-            println!("out of bounds!");
-        }
-        if self.car.x_pos + self.car.width * 0.5 > road_bounds.1 {
-            println!("out of bounds!");
-        }
+        let car_left = self.car.x_pos - self.car.width * 0.5;
+        let car_right = self.car.x_pos + self.car.width * 0.5;
+        self.car.roadside_dist = self.track.as_ref().unwrap().roadside_dist(car_left, car_right, self.camera.road_distance + self.camera.screen_dist);
+        println!("roadside_dist : {}", self.car.roadside_dist.unwrap_or(0.0));
 
         self.camera.x_offset = self.car.x_pos;
         self.camera.road_distance += self.car.speed * delta_time;

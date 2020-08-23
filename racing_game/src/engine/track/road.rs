@@ -43,9 +43,18 @@ impl Road {
         }
     }
 
-    pub fn get_bounds(&self, road_distance : f32) -> (f32, f32) {
-        let offset = self.get_segment_offset(road_distance).unwrap();
-        (offset - self.width * 0.5, offset + self.width * 0.5)
+    pub fn roadside_dist(&self, car_left : f32, car_right : f32, car_road_dist : f32) -> Option<f32> {
+        let offset = self.get_segment_offset(car_road_dist);
+        if offset.is_none() { return None; }
+        let offset = offset.unwrap();
+        
+        let road_left = offset - self.width * 0.5;
+        if road_left > car_left { return Some(car_left - road_left); }
+
+        let road_right = offset + self.width * 0.5;
+        if road_right < car_right { return Some(car_right - road_right); }
+
+        None
     }
 
     fn get_segment_offset(&self, road_distance : f32) -> Option<f32> {

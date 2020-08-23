@@ -118,11 +118,19 @@ impl Track {
         }
     }
 
-    pub fn get_bounds(&self) -> (f32, f32) {
-        let offset = self.y_data[0].norm_road_offset;
-        let half_width = self.y_data[0].road_scale * 0.5;
+    pub fn roadside_dist(&self, car_left : f32, car_right : f32, car_road_dist : f32) -> Option<f32> {
+        let mut dist = None;
 
-        (offset - half_width, offset + half_width)
+        for road in &self.data.roads {
+            let new_dist = road.roadside_dist(car_left, car_right, car_road_dist);
+            if let Some(new_dist) = new_dist {
+                if new_dist.abs() < dist.unwrap_or(std::f32::INFINITY) {
+                    dist = Some(new_dist);
+                }
+            }
+        }
+
+        dist
     }
 
     pub fn render_from_y_data(&self, image : &mut RgbImage, camera : &Camera) {

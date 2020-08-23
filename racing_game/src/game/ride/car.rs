@@ -1,6 +1,6 @@
 use image::{RgbImage, RgbaImage};
 
-use crate::engine::common::{IVec2, ImageOps};
+use crate::engine::common::{IVec2, ImageOps, Math};
 use crate::game::*;
 
 pub struct Car{
@@ -10,6 +10,7 @@ pub struct Car{
     pub speed : f32,
     max_speed : f32,
     steer_speed : f32,
+    pub roadside_dist : Option<f32>,
     pub x_pos : f32,
     pub width : f32,
     image : RgbaImage,
@@ -29,6 +30,7 @@ impl Car {
             brake_deceleration,
             max_speed,
             steer_speed,
+            roadside_dist : None,
             x_pos : 0.0,
             width,
 
@@ -42,6 +44,7 @@ impl Car {
     }
 
     pub fn reset(&mut self) {
+        self.roadside_dist = None;
         self.input_horz = None;
         self.input_vert = None;
         self.prev_input_horz = None;
@@ -94,7 +97,7 @@ impl Car {
             _ => { 0.0 }
         };
 
-        self.x_pos += steer * delta_time * self.steer_speed;
+        self.x_pos += steer * delta_time * self.steer_speed * (self.speed / self.max_speed);
 
         let acceleration = match self.input_vert {
             Some(InputEvent::CarGas) => { self.acceleration }
@@ -103,7 +106,15 @@ impl Car {
         };
     
         self.speed += delta_time * acceleration;
-        if self.speed > self.max_speed { self.speed = self.max_speed; }
+        
+        let max_speed = self.max_speed * 
+        if let Some(roadside_dist) = self.roadside_dist {
+            1.0 / (roadside_dist.abs() * 3.0 + 1.0)
+        } else {
+            1.0
+        };
+        
+        if self.speed > max_speed { self.speed = max_speed; }
         if self.speed < 0.0 { self.speed = 0.0 };
     }
 
