@@ -37,6 +37,7 @@ impl UIScreen for GameScreen {
 
         for (event, event_type) in input {
             match (event, event_type) {
+                (InputEvent::UIMenu, EventType::Pressed) => { return vec![UIEvent::ChangeScreen(Screen::GameMenu), UIEvent::SetRidePaused(true)]; }
                 _ => { }
             }
         }

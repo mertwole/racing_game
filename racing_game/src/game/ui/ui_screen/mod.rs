@@ -11,11 +11,13 @@ use crate::engine::ui::font::*;
 
 mod map_screen;
 mod game_screen;
+mod game_menu_screen;
 mod services_screen;
 mod service_select_screen;
 
 pub use map_screen::*;
 pub use game_screen::*;
+pub use game_menu_screen::*;
 pub use services_screen::*;
 pub use service_select_screen::*;
 
@@ -23,6 +25,7 @@ pub use service_select_screen::*;
 pub enum Screen{
     Map,
     Game,
+    GameMenu,
     Services,
 
     GasStations,
@@ -39,6 +42,7 @@ pub fn create_all_screens(resolution : &IVec2) -> HashMap<Screen, Box<dyn UIScre
 
     let map_screen = Box::from(MapScreen::new(resolution, font.clone()));
     let game_screen = Box::from(GameScreen::new(resolution, font.clone()));
+    let game_menu_screen = Box::from(GameMenuScreen::new(resolution, font.clone()));
     let services_screen = Box::from(ServicesScreen::new(resolution, font.clone()));
 
     let gas_stations_screen = Box::from(ServiceSelectScreen::<GasStation>::new(resolution, font.clone()));
@@ -48,6 +52,7 @@ pub fn create_all_screens(resolution : &IVec2) -> HashMap<Screen, Box<dyn UIScre
 
     ui_screens.insert(Screen::Map, map_screen);
     ui_screens.insert(Screen::Game, game_screen);
+    ui_screens.insert(Screen::GameMenu, game_menu_screen);
     ui_screens.insert(Screen::Services, services_screen);
 
     ui_screens.insert(Screen::GasStations, gas_stations_screen);

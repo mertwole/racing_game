@@ -21,6 +21,7 @@ pub struct Ride {
     traffic : Traffic,
     camera : Camera,
     active : bool,
+    paused : bool,
 
     pub car : Car,
     player : Option<Player>
@@ -47,9 +48,14 @@ impl Ride {
             camera,
             length : 0.0, 
             active : false,
+            paused : false,
             player : None,
             traffic : Traffic::new()
         }
+    }
+
+    pub fn set_paused(&mut self, paused : bool) {
+        self.paused = paused;
     }
 
     pub fn start_ride(&mut self, ride_data : RoadPathMeta, player : Player) {
@@ -67,13 +73,13 @@ impl Ride {
     }
 
     pub fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
-        if !self.active { return; } 
-
+        if !self.active || self.paused { return; } 
         self.car.process_input(input);
     }
 
     pub fn update(&mut self, delta_time : f32) -> Vec<RideEvent> {
-        if !self.active { return Vec::new(); } 
+        if !self.active || self.paused { return Vec::new(); } 
+
         self.car.update(delta_time);
 
         self.traffic.update(&self.camera, delta_time, &mut self.billboards);
@@ -90,7 +96,6 @@ impl Ride {
         let car_left = self.car.x_pos - self.car.width * 0.5;
         let car_right = self.car.x_pos + self.car.width * 0.5;
         self.car.roadside_dist = self.track.as_ref().unwrap().roadside_dist(car_left, car_right, self.camera.road_distance + self.camera.screen_dist);
-        println!("roadside_dist : {}", self.car.roadside_dist.unwrap_or(0.0));
 
         self.camera.x_offset = self.car.x_pos;
         self.camera.road_distance += self.car.speed * delta_time;

@@ -52,8 +52,10 @@ pub enum InputEvent{
     UILeft,
     UIUp,
     UIDown,
+
     UISelect,
-    UIBack
+    UIBack,
+    UIMenu
 }
 
 #[derive(Clone)]
@@ -83,6 +85,7 @@ impl Game {
         input.bind_action(InputEvent::UIRight, Key::Right);
         input.bind_action(InputEvent::UISelect, Key::Enter);
         input.bind_action(InputEvent::UIBack, Key::Backspace);
+        input.bind_action(InputEvent::UIMenu, Key::Escape);
 
         let mut generation_rng = rand::rngs::StdRng::from_seed([10, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5]);
         let parameters = city_map::GenerationParameters { 
@@ -143,7 +146,10 @@ impl Game {
                 UIEvent::ServiceAction(id, action) => {
                     self.city_map.process_service_action(id, action, &mut self.player); 
                 }
-                _ => { }
+                UIEvent::SetRidePaused(paused) => {
+                    self.ride.set_paused(paused);
+                }
+                UIEvent::ChangeScreen(_) => { }
             } 
         }
 
@@ -158,7 +164,6 @@ impl Game {
                 RideEvent::ChangePlayer(player) => {
                     self.player = player;
                 }
-                _ => { }
             } 
         }
 

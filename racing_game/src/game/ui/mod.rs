@@ -15,7 +15,8 @@ pub enum UIEvent{
     SelectCityDestination(usize),
     ChangePlayer(Player),
     ChangeScreen(Screen),
-    ServiceAction(ServiceId, ServiceAction)
+    ServiceAction(ServiceId, ServiceAction),
+    SetRidePaused(bool)
 }
 
 pub struct UI {
