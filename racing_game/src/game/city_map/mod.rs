@@ -244,7 +244,17 @@ impl CityMap {
         let billboard_factories = Self::create_billboard_factories();
 
         let services = Services::generate(rng);
-        let service_subsets = services.generate_subsets(city_positions.len(), rng);
+        let mut service_subsets = Vec::new();
+        for _i in 0..city_positions.len() {
+            service_subsets.push(services.generate_subset(
+                ServicesSubsetProperties { 
+                    gas_station_count : 3,  
+                    hostel_count : 3,
+                    repair_station_count : 0,
+                    shop_count : 0
+                }, 
+            rng));
+        }
 
         let mut roads : Vec<RoadPath> = roads.into_iter()
         .map(|road| RoadPath::new(road.0, road.1))

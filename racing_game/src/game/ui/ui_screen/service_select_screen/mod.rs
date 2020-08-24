@@ -125,7 +125,7 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
         menu_items.push(back_item);
 
         let pointer_image = Game::load_image_rgba("ui/pointer.png");
-        self.menu = Some(UISelector::new(menu_items, pointer_image, self.resolution.clone()));
+        self.menu = Some(UISelector::new(menu_items, SelectionType::Vertical, pointer_image, self.resolution.clone()));
     }
 
     fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
@@ -141,8 +141,8 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
 
                 for (event, event_type) in input {
                     match (event, event_type) {
-                        (InputEvent::UIDown, EventType::Pressed) => { self.menu.as_mut().unwrap().select_next_in_direction(&IVec2::new(0, 1)); }
-                        (InputEvent::UIUp, EventType::Pressed) => { self.menu.as_mut().unwrap().select_next_in_direction(&IVec2::new(0, -1)); }
+                        (InputEvent::UIDown, EventType::Pressed) => { self.menu.as_mut().unwrap().select_next_in_direction(&IVec2::new(0, -1)); }
+                        (InputEvent::UIUp, EventType::Pressed) => { self.menu.as_mut().unwrap().select_next_in_direction(&IVec2::new(0, 1)); }
                         (InputEvent::UISelect, EventType::Pressed) => { 
                             let menu_event = self.menu.as_mut().unwrap().select_current();
                             match menu_event {

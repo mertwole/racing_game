@@ -81,7 +81,7 @@ impl ServicesScreen {
             MenuEvents::Next)
         );
 
-        let menu = UISelector::new(menu_items, pointer_image, resolution.clone());
+        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, resolution.clone());
 
         ServicesScreen { menu }
     }
@@ -95,8 +95,8 @@ impl UIScreen for ServicesScreen {
     fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
         for (event, event_type) in input {
             match (event, event_type) {
-                (InputEvent::UIDown, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, 1)); }
-                (InputEvent::UIUp, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, -1)); }
+                (InputEvent::UIDown, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, -1)); }
+                (InputEvent::UIUp, EventType::Pressed) => { self.menu.select_next_in_direction(&IVec2::new(0, 1)); }
                 (InputEvent::UISelect, EventType::Pressed) => { 
                     let menu_event = self.menu.select_current();
                     match menu_event {

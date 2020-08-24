@@ -47,7 +47,7 @@ impl ServiceModal for HostelModal {
             ));
         }
 
-        let option_selector = UISelector::<OptionSelect>::new(menu_items, pointer_image, self.resolution.clone());
+        let option_selector = UISelector::<OptionSelect>::new(menu_items, SelectionType::Vertical, pointer_image, self.resolution.clone());
         self.modal.add_control(Box::from(option_selector), ControlProperties { position : IVec2::zero(), pivot : Pivot::LeftBottom, binding : Binding::LeftBottom });
     }   
 
@@ -60,13 +60,13 @@ impl ServiceModal for HostelModal {
                 (InputEvent::UIDown, EventType::Pressed) => { 
                     unsafe {
                         let ui_select = &mut *(self.modal.get_control_mut(0) as *mut dyn UIControl as *mut UISelector<OptionSelect>);
-                        ui_select.select_next_in_direction(&IVec2::new(0, 1));
+                        ui_select.select_next_in_direction(&IVec2::new(0, -1));
                     }
                 }
                 (InputEvent::UIUp, EventType::Pressed) => { 
                     unsafe {
                         let ui_select = &mut *(self.modal.get_control_mut(0) as *mut dyn UIControl as *mut UISelector<OptionSelect>);
-                        ui_select.select_next_in_direction(&IVec2::new(0, -1));
+                        ui_select.select_next_in_direction(&IVec2::new(0, 1));
                     }
                 }
                 (InputEvent::UISelect, EventType::Pressed) => { 

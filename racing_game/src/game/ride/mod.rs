@@ -22,7 +22,7 @@ pub struct Ride {
     camera : Camera,
     active : bool,
 
-    car : Car,
+    pub car : Car,
     player : Option<Player>
 }
 

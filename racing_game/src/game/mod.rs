@@ -38,7 +38,7 @@ pub struct Game {
     pub city_map : CityMap,
     ui : UI,
 
-    ride : Ride 
+    pub ride : Ride 
 }
 
 #[derive(Copy, Clone, PartialEq)]

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use rand::Rng;
 use std::rc::Rc;
 
 use image::RgbaImage;
@@ -53,6 +54,13 @@ pub struct Services {
     services : HashMap<ServiceType, Vec<Box<dyn Service>>>
 }
 
+pub struct ServicesSubsetProperties {
+    pub gas_station_count : usize,
+    pub hostel_count : usize,
+    pub repair_station_count : usize,
+    pub shop_count : usize
+}
+
 impl Services {
     pub fn generate(rng : &mut StdRng) -> Services {
         let mut gas_stations = Vec::new();
@@ -78,20 +86,32 @@ impl Services {
         Services { services }
     }
 
-    pub fn generate_subsets(&self, city_count : usize, rng : &mut StdRng) -> Vec<CityServicesSubset> {
-        let mut subsets : Vec<CityServicesSubset> = Vec::with_capacity(city_count);
-
-        for _i in 0..city_count {
-            let mut service_ids = HashMap::new();
-            service_ids.insert(ServiceType::GasStation, vec![ServiceId(0), ServiceId(1), ServiceId(2), ServiceId(3), ServiceId(4), ServiceId(5), ServiceId(6)]);
-            service_ids.insert(ServiceType::Hostel, vec![ServiceId(0), ServiceId(1), ServiceId(2), ServiceId(3), ServiceId(4), ServiceId(5), ServiceId(6)]);
-            service_ids.insert(ServiceType::RepairStation, Vec::new());
-            service_ids.insert(ServiceType::Shop, Vec::new());
-
-            subsets.push(CityServicesSubset { service_ids });
+    fn generate_subset_concrete_service(&self, subset : &mut CityServicesSubset, service_type : ServiceType, count : usize, rng : &mut StdRng) {
+        let mut ids : Vec<ServiceId> = Vec::new();
+        let services_of_type = self.services.get(&service_type).unwrap();
+        for _i in 0..count {
+            'outer : loop {
+                let id = rng.gen_range(0, services_of_type.len());
+                for existing_id in &ids {
+                    if existing_id.0 == id { continue 'outer; }
+                }
+                ids.push(ServiceId { 0 : id });
+                break;
+            }
         }
 
-        subsets
+        subset.service_ids.insert(service_type, ids);
+    }
+
+    pub fn generate_subset(&self, properties : ServicesSubsetProperties, rng : &mut StdRng) -> CityServicesSubset {
+        let mut subset = CityServicesSubset { service_ids : HashMap::new() };
+
+        self.generate_subset_concrete_service(&mut subset, ServiceType::GasStation,     properties.gas_station_count,       rng);
+        self.generate_subset_concrete_service(&mut subset, ServiceType::Hostel,         properties.hostel_count,            rng);
+        self.generate_subset_concrete_service(&mut subset, ServiceType::RepairStation,  properties.repair_station_count,    rng);
+        self.generate_subset_concrete_service(&mut subset, ServiceType::Shop,           properties.shop_count,              rng);
+
+        subset
     }
 
     pub fn process_action(&mut self, id : ServiceId, action : ServiceAction, player : &mut Player) {
