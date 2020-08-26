@@ -14,12 +14,16 @@ mod game_screen;
 mod game_menu_screen;
 mod services_screen;
 mod service_select_screen;
+mod settings_screen;
+mod control_settings_screen;
 
 pub use map_screen::*;
 pub use game_screen::*;
 pub use game_menu_screen::*;
 pub use services_screen::*;
 pub use service_select_screen::*;
+pub use settings_screen::*;
+pub use control_settings_screen::*;
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone)]
 pub enum Screen{
@@ -27,6 +31,8 @@ pub enum Screen{
     Game,
     GameMenu,
     Services,
+    Settings,
+    ControlSettings,
 
     GasStations,
     Hostels,
@@ -44,6 +50,8 @@ pub fn create_all_screens(resolution : &IVec2) -> HashMap<Screen, Box<dyn UIScre
     let game_screen = Box::from(GameScreen::new(resolution, font.clone()));
     let game_menu_screen = Box::from(GameMenuScreen::new(resolution, font.clone()));
     let services_screen = Box::from(ServicesScreen::new(resolution, font.clone()));
+    let settings_screen = Box::from(SettingsScreen::new(resolution, font.clone()));
+    let control_settings_screen = Box::from(ControlSettingsScreen::new(resolution, font.clone()));
 
     let gas_stations_screen = Box::from(ServiceSelectScreen::<GasStation>::new(resolution, font.clone()));
     let hostels_screen = Box::from(ServiceSelectScreen::<Hostel>::new(resolution, font.clone()));
@@ -54,6 +62,8 @@ pub fn create_all_screens(resolution : &IVec2) -> HashMap<Screen, Box<dyn UIScre
     ui_screens.insert(Screen::Game, game_screen);
     ui_screens.insert(Screen::GameMenu, game_menu_screen);
     ui_screens.insert(Screen::Services, services_screen);
+    ui_screens.insert(Screen::Settings, settings_screen);
+    ui_screens.insert(Screen::ControlSettings, control_settings_screen);
 
     ui_screens.insert(Screen::GasStations, gas_stations_screen);
     ui_screens.insert(Screen::Hostels, hostels_screen);

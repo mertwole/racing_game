@@ -1,4 +1,4 @@
-use image::{RgbaImage, RgbImage};
+use image::{RgbaImage, RgbImage, Rgb};
 
 use super::*;
 use crate::engine::ui::*;
@@ -35,10 +35,10 @@ pub enum SelectionType {
 
 // Fullscreen menu overlays UI.
 impl<E : Clone> UISelector<E> {
-    pub fn new(items : Vec<UISelectorItem<E>>, selection_type : SelectionType, pointer_image : RgbaImage, resolution : IVec2) -> UISelector<E> {
+    pub fn new(items : Vec<UISelectorItem<E>>, selection_type : SelectionType, pointer_image : RgbaImage, resolution : IVec2, background_color : Option<Rgb<u8>>) -> UISelector<E> {
         let mut pointer_positions : Vec<IVec2> = Vec::with_capacity(items.len());
         let pointer_offset = IVec2::new(-(pointer_image.width() as isize), 0);
-        let mut page = UIPage::new(resolution.clone(), None);
+        let mut page = UIPage::new(resolution.clone(), background_color);
         let mut control_events : Vec<Box<E>> = Vec::with_capacity(items.len());
 
         for item in items {

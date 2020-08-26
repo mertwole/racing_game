@@ -81,7 +81,7 @@ impl ServicesScreen {
             MenuEvents::Next)
         );
 
-        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, resolution.clone());
+        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, resolution.clone(), None);
 
         ServicesScreen { menu }
     }

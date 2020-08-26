@@ -58,7 +58,7 @@ impl GameMenuScreen {
             MenuEvents::Exit)
         );
 
-        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, resolution.clone());
+        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, resolution.clone(), None);
 
         GameMenuScreen { menu }
     }
@@ -78,7 +78,7 @@ impl UIScreen for GameMenuScreen {
                     let menu_event = self.menu.select_current();
                     match menu_event {
                         MenuEvents::Resume => { return vec![UIEvent::ChangeScreen(Screen::Game), UIEvent::SetRidePaused(false)]; },
-                        MenuEvents::Settings => { return vec![]; },
+                        MenuEvents::Settings => { return vec![UIEvent::ChangeScreen(Screen::Settings)]; },
                         MenuEvents::Exit => { return vec![]; },
                     }
                 }
