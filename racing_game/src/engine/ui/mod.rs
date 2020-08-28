@@ -33,6 +33,28 @@ impl ControlProperties {
     pub fn new(position : IVec2, pivot : Pivot, binding : Binding) -> ControlProperties {
         ControlProperties { position, pivot, binding }
     }
+
+    fn get_position(&self, control_size : IVec2, resolution : IVec2) -> IVec2 {
+        let mut position = self.position;
+
+        position = &position - &match self.pivot {
+            Pivot::Center => { &control_size / 2 },
+            Pivot::LeftBottom => { IVec2::zero() }
+            Pivot::RightTop => { control_size }
+            Pivot::RightBottom => { IVec2::new(control_size.x, 0) }
+            Pivot::LeftTop => { IVec2::new(0, control_size.y) }
+        };
+        
+        position = &position + &match self.binding {
+            Binding::Center => { &resolution / 2 },
+            Binding::LeftBottom => { IVec2::zero() },
+            Binding::LeftTop => { IVec2::new(0, resolution.y) },
+            Binding::RightBottom => { IVec2::new(resolution.x, 0) },
+            Binding::RightTop => { resolution },
+        };
+
+        position
+    }
 }
 
 #[readonly::make]
@@ -48,27 +70,8 @@ impl UIPage {
     }
 
     pub fn add_control(&mut self, mut control : Box<dyn UIControl>, properties : &ControlProperties) {
-        let control_size = control.get_size();
-        let mut position = properties.position;
-
-        position = &position - &match properties.pivot {
-            Pivot::Center => { &control_size / 2 },
-            Pivot::LeftBottom => { IVec2::zero() }
-            Pivot::RightTop => { control_size }
-            Pivot::RightBottom => { IVec2::new(control_size.x, 0) }
-            Pivot::LeftTop => { IVec2::new(0, control_size.y) }
-        };
-        
-        position = &position + &match properties.binding {
-            Binding::Center => { &self.resolution / 2 },
-            Binding::LeftBottom => { IVec2::zero() },
-            Binding::LeftTop => { IVec2::new(0, self.resolution.y) },
-            Binding::RightBottom => { IVec2::new(self.resolution.x, 0) },
-            Binding::RightTop => { self.resolution },
-        };
-
+        let position = properties.get_position(control.get_size(), self.resolution);
         control.set_position(position);
-
         self.controls.push(control);
     }
 

@@ -47,7 +47,8 @@ impl ServiceModal for HostelModal {
             ));
         }
 
-        let option_selector = UISelector::<OptionSelect>::new(menu_items, SelectionType::Vertical, pointer_image, self.resolution.clone(), None);
+        let pointer_offset = IVec2::new(-(pointer_image.width() as isize), 0);
+        let option_selector = UISelector::<OptionSelect>::new(menu_items, SelectionType::Vertical, pointer_image, pointer_offset, self.resolution.clone(), None);
         self.modal.add_control(Box::from(option_selector), ControlProperties { position : IVec2::zero(), pivot : Pivot::LeftBottom, binding : Binding::LeftBottom });
     }   
 

@@ -19,8 +19,14 @@ enum MenuEvents {
     Back
 }
 
+#[derive(Copy, Clone)]
+struct Volume(usize);
+
 pub struct SettingsScreen{
     menu : UISelector<MenuEvents>,
+    music_volume : UISelector<Volume>,
+    sfx_volume : UISelector<Volume>,
+    page : UIPage,
     selected_menu_item : MenuEvents
 }
 
@@ -34,8 +40,8 @@ impl SettingsScreen {
         menu_items.push(UISelectorItem::new(
             Box::from(UIText::new(font.clone(), String::from("MUSIC VOLUME"))), 
             ControlProperties { 
-                pivot : Pivot::LeftBottom, 
-                position : IVec2::new(-50, 40), 
+                pivot : Pivot::Center, 
+                position : IVec2::new(-90, 40), 
                 binding : Binding::Center 
             }, 
             MenuEvents::MusicVolume)
@@ -44,8 +50,8 @@ impl SettingsScreen {
         menu_items.push(UISelectorItem::new(
             Box::from(UIText::new(font.clone(), String::from("SFX VOLUME"))), 
             ControlProperties { 
-                pivot : Pivot::LeftBottom, 
-                position : IVec2::new(-50, 20), 
+                pivot : Pivot::Center, 
+                position : IVec2::new(-90, 20), 
                 binding : Binding::Center 
             }, 
             MenuEvents::SfxVolume)
@@ -71,17 +77,59 @@ impl SettingsScreen {
             MenuEvents::Back)
         );
 
-        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, resolution.clone(), Some(Rgb([0, 0, 0])));
+        let pointer_offset = IVec2::new(-(pointer_image.width() as isize), 0);
+        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, pointer_offset, resolution.clone(), None);
 
-        SettingsScreen { menu, selected_menu_item : MenuEvents::MusicVolume }
+        let mut page = UIPage::new(*resolution, Some(Rgb([0, 0, 0])));
+
+        let scale_img = Rc::from(Game::load_image_rgba("ui/volume_scale.png"));
+        let music_volume_scale = Box::from(UIImage::new(scale_img.clone()));
+        let sfx_volume_scale = Box::from(UIImage::new(scale_img));
+        page.add_control(music_volume_scale, &ControlProperties { pivot : Pivot::Center, binding : Binding::Center, position : IVec2::new(50, 40) });
+        page.add_control(sfx_volume_scale, &ControlProperties { pivot : Pivot::Center, binding : Binding::Center, position : IVec2::new(50, 20) });
+        
+        let mut music_volume_steps : Vec<UISelectorItem<Volume>> = Vec::new();
+        for i in 0..12 {
+            music_volume_steps.push(UISelectorItem::new(
+                Box::from(UIVoid::new()), 
+                ControlProperties { 
+                    pivot : Pivot::Center, 
+                    position : IVec2::new(-9 + i * 10, 40), 
+                    binding : Binding::Center 
+                }, 
+                Volume(i as usize))
+            );
+        }
+        let pointer_image = Game::load_image_rgba("ui/volume_pointer.png");
+        let pointer_offset = IVec2::new(0, -((pointer_image.height() / 2) as isize));
+        let music_volume = UISelector::new(music_volume_steps, SelectionType::Horizontal, pointer_image, pointer_offset, *resolution, None);
+
+
+        let mut sfx_volume_steps : Vec<UISelectorItem<Volume>> = Vec::new();
+        for i in 0..12 {
+            sfx_volume_steps.push(UISelectorItem::new(
+                Box::from(UIVoid::new()), 
+                ControlProperties { 
+                    pivot : Pivot::Center, 
+                    position : IVec2::new(-9 + i * 10, 20), 
+                    binding : Binding::Center 
+                }, 
+                Volume(i as usize))
+            );
+        }
+        let pointer_image = Game::load_image_rgba("ui/volume_pointer.png");
+        let pointer_offset = IVec2::new(0, -((pointer_image.height() / 2) as isize));
+        let sfx_volume = UISelector::new(sfx_volume_steps, SelectionType::Horizontal, pointer_image, pointer_offset, *resolution, None);
+
+        SettingsScreen { menu, page, music_volume, sfx_volume, selected_menu_item : MenuEvents::MusicVolume }
     }
 
     fn change_music_volume(&mut self, delta : isize) {
-
+        self.music_volume.select_next_in_direction(&IVec2::new(delta, 0));
     }
 
     fn change_sfx_volume(&mut self, delta : isize) {
-
+        self.sfx_volume.select_next_in_direction(&IVec2::new(delta, 0));
     }
 }
 
@@ -132,6 +180,9 @@ impl UIScreen for SettingsScreen {
     }
 
     fn render(&self, buffer : &mut RgbImage) {
+        self.page.draw(buffer);
+        self.music_volume.draw(buffer);
+        self.sfx_volume.draw(buffer);
         self.menu.draw(buffer);
     }
 }

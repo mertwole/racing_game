@@ -58,7 +58,8 @@ impl GameMenuScreen {
             MenuEvents::Exit)
         );
 
-        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, resolution.clone(), None);
+        let pointer_offset = IVec2::new(-(pointer_image.width() as isize), 0);
+        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, pointer_offset, resolution.clone(), None);
 
         GameMenuScreen { menu }
     }

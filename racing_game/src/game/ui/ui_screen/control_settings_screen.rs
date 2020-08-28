@@ -26,8 +26,8 @@ impl ControlSettingsScreen {
         let mut menu_items : Vec<UISelectorItem<MenuEvents>> = Vec::new();
 
         
-
-        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, resolution.clone(), None);
+        let pointer_offset = IVec2::new(-(pointer_image.width() as isize), 0);
+        let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, pointer_offset, resolution.clone(), None);
 
         ControlSettingsScreen { menu }
     }

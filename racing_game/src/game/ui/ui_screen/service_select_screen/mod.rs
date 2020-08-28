@@ -125,7 +125,8 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
         menu_items.push(back_item);
 
         let pointer_image = Game::load_image_rgba("ui/pointer.png");
-        self.menu = Some(UISelector::new(menu_items, SelectionType::Vertical, pointer_image, self.resolution.clone(), None));
+        let pointer_offset = IVec2::new(-(pointer_image.width() as isize), 0);
+        self.menu = Some(UISelector::new(menu_items, SelectionType::Vertical, pointer_image, pointer_offset, self.resolution.clone(), None));
     }
 
     fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
