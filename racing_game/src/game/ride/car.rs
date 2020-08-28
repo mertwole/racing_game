@@ -1,15 +1,39 @@
+use std::collections::HashMap;
+
 use image::{RgbImage, RgbaImage};
 
 use crate::engine::common::{IVec2, ImageOps, Math};
 use crate::game::*;
 
+#[derive(Clone)]
+pub struct Characteristics {
+    pub acceleration : f32,
+    pub deceleration : f32,
+    pub brake_deceleration : f32,
+    pub max_speed : f32,
+    pub steer_speed : f32,
+    pub gas_mileage : f32
+}
+
+impl Characteristics {
+    pub fn new(acceleration : f32, deceleration : f32, brake_deceleration : f32, max_speed : f32, steer_speed : f32, gas_mileage : f32) -> Characteristics {
+        Characteristics {
+            acceleration,
+            deceleration,
+            brake_deceleration,
+            max_speed,
+            steer_speed,
+            gas_mileage
+        }
+    }
+}
+
 pub struct Car{
-    acceleration : f32,
-    deceleration : f32,
-    brake_deceleration : f32,
+    base_characteristics : Characteristics,
+    characteristics : Characteristics,
+    damage : Damage,
+
     pub speed : f32,
-    max_speed : f32,
-    steer_speed : f32,
     pub roadside_dist : Option<f32>,
     pub x_pos : f32,
     pub width : f32,
@@ -22,14 +46,13 @@ pub struct Car{
 }
 
 impl Car {
-    pub fn new(image : RgbaImage, width : f32, acceleration : f32, deceleration : f32, brake_deceleration : f32, max_speed : f32, steer_speed : f32) -> Car {
+    pub fn new(image : RgbaImage, width : f32, characteristics : Characteristics) -> Car {
         Car { 
-            speed : 0.0, 
-            acceleration, 
-            deceleration, 
-            brake_deceleration,
-            max_speed,
-            steer_speed,
+            base_characteristics : characteristics.clone(),
+            characteristics,
+            damage : Damage::void(),
+
+            speed : 0.0,
             roadside_dist : None,
             x_pos : 0.0,
             width,
@@ -97,17 +120,17 @@ impl Car {
             _ => { 0.0 }
         };
 
-        self.x_pos += steer * delta_time * self.steer_speed * (self.speed / self.max_speed);
+        self.x_pos += steer * delta_time * self.characteristics.steer_speed * (self.speed / self.characteristics.max_speed);
 
         let acceleration = match self.input_vert {
-            Some(InputEvent::CarGas) => { self.acceleration }
-            Some(InputEvent::CarBrake) => { -self.brake_deceleration }
-            _ => { -self.deceleration }
+            Some(InputEvent::CarGas) => { self.characteristics.acceleration }
+            Some(InputEvent::CarBrake) => { -self.characteristics.brake_deceleration }
+            _ => { -self.characteristics.deceleration }
         };
     
         self.speed += delta_time * acceleration;
         
-        let max_speed = self.max_speed * 
+        let max_speed = self.characteristics.max_speed * 
         if let Some(roadside_dist) = self.roadside_dist {
             1.0 / (roadside_dist.abs() * 3.0 + 1.0)
         } else {
@@ -123,5 +146,70 @@ impl Car {
         let render_y = 0;
 
         ImageOps::overlay_rgba(image, &self.image, &IVec2::new(render_x as isize, render_y));
+    }
+}
+
+enum Characteristic {
+    Acceleration,
+    Deceleration,
+    BrakeDeceleration,
+    MaxSpeed,
+    SteerSpeed,
+    GasMileage
+}
+
+#[derive(Hash, PartialEq, Eq)]
+enum System {
+    Wheels,
+    Transmission,
+    Chase,
+    Engine,
+    Brake,
+    Starter
+}
+
+struct DamageEffect {
+    characteristic : Characteristic,
+    system : System,
+    multiplier_when_fully_broken : f32
+}
+
+impl DamageEffect {
+    fn new(characteristic : Characteristic, system : System, multiplier_when_fully_broken : f32) -> DamageEffect {
+        DamageEffect { characteristic, system, multiplier_when_fully_broken }
+    }
+
+    fn apply(&self, characteristicts : &mut Characteristics, damage : &Damage) {
+        let multiplier = Math::lerp(1.0, self.multiplier_when_fully_broken, damage.systems.get(&self.system).unwrap().to_norm());
+        match self.characteristic {
+            Characteristic::Acceleration => { characteristicts.acceleration *= multiplier; }
+            Characteristic::Deceleration => { characteristicts.deceleration *= multiplier; }
+            Characteristic::BrakeDeceleration => { characteristicts.brake_deceleration *= multiplier; }
+            Characteristic::MaxSpeed => { characteristicts.max_speed *= multiplier; }
+            Characteristic::SteerSpeed => { characteristicts.steer_speed *= multiplier; }
+            Characteristic::GasMileage => { characteristicts.gas_mileage *= multiplier; }
+        }
+    }
+}
+
+struct Damage {
+    systems : HashMap<System, Percent>,
+    effects : Vec<DamageEffect>
+}
+
+impl Damage {
+    fn void () -> Damage {
+        let systems = HashMap::<System, Percent>::new();
+
+        let mut effects = vec![
+            DamageEffect::new(Characteristic::Deceleration, System::Brake, 0.5)
+        ];
+
+        Damage { systems, effects }
+    }
+
+    fn affect_characteristics(&self, mut characteristics : Characteristics) -> Characteristics {
+        for effect in &self.effects { effect.apply(&mut characteristics, &self); }
+        characteristics
     }
 }

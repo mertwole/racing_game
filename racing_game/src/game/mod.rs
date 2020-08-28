@@ -58,8 +58,11 @@ pub enum InputEvent{
     UIMenu
 }
 
-#[derive(Clone)]
-pub struct Percent(f32);
+#[derive(Copy, Clone)]
+pub struct Percent(pub f32);
+
+impl Percent { pub fn to_norm(&self) -> f32 { self.0 * 0.01 } }
+
 
 #[derive(Clone)]
 pub struct Time { pub hr : u32, pub min : u32 }

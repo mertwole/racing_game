@@ -38,7 +38,8 @@ impl Ride {
         let camera = Camera { screen_dist : 1.0, viewport_height : 1.0, y_pos : 1.0, far_plane : 150.0, pitch : 1.5, road_distance : 0.0, x_offset : 0.0 }; 
         let car_img = Game::load_image_rgba("ferrari.png");
         let car_width = car_img.width() as f32 / SCREEN_RESOLUTION.x as f32;
-        let car = Car::new(car_img, car_width, 5.0, 1.0, 10.0, 10.0, 1.5);
+        let car_characteristics = Characteristics::new(5.0, 1.0, 10.0, 10.0, 1.5, 1.0);
+        let car = Car::new(car_img, car_width, car_characteristics);
 
         Ride { 
             track : None,
