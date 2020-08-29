@@ -147,7 +147,7 @@ impl Game {
                     self.player = player;
                 }
                 UIEvent::ServiceAction(id, action) => {
-                    self.city_map.process_service_action(id, action, &mut self.player); 
+                    self.city_map.process_service_action(id, action, &mut self.player, &mut self.ride.car); 
                 }
                 UIEvent::SetRidePaused(paused) => {
                     self.ride.set_paused(paused);

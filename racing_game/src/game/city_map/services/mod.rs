@@ -5,7 +5,10 @@ use std::rc::Rc;
 use image::RgbaImage;
 use rand::{rngs::StdRng};
 
-use crate::{Game, game::player::Player};
+use crate::Game;
+use crate::game::Percent;
+use crate::game::player::Player;
+use crate::game::ride::car::*;
 
 mod gas_station;
 mod hostel;
@@ -19,7 +22,8 @@ pub use shop::*;
 
 pub enum ServiceAction{
     BuyGas(u32),
-    RestInHostel(u32)
+    RestInHostel(u32),
+    FixCarSystem(CarSystem, Percent)
 }
 
 pub trait Service {
@@ -77,10 +81,17 @@ impl Services {
             hostels.push(Box::<dyn Service>::from(Box::from(h)));
         }
 
+        let mut repair_stations = Vec::new();
+        for i in 0..7 {
+            let rs_logo = Game::load_image_rgba(&*format!("logos/hostels/logo{}.png", i));
+            let rs = RepairStation::generate(rs_logo, rng);
+            repair_stations.push(Box::<dyn Service>::from(Box::from(rs)));
+        }
+
         let mut services = HashMap::new();
         services.insert(ServiceType::GasStation, gas_stations);
         services.insert(ServiceType::Hostel, hostels);
-        services.insert(ServiceType::RepairStation, Vec::new());
+        services.insert(ServiceType::RepairStation, repair_stations);
         services.insert(ServiceType::Shop, Vec::new());
 
         Services { services }
@@ -114,10 +125,11 @@ impl Services {
         subset
     }
 
-    pub fn process_action(&mut self, id : ServiceId, action : ServiceAction, player : &mut Player) {
+    pub fn process_action(&mut self, id : ServiceId, action : ServiceAction, player : &mut Player, car : &mut Car) {
         match action {
             ServiceAction::BuyGas(amount) => { self.get_service_mut::<GasStation>(id).buy_gas(amount, player); }
             ServiceAction::RestInHostel(option_id) => { self.get_service_mut::<Hostel>(id).rest(option_id, player); }
+            ServiceAction::FixCarSystem(system, percent) => { self.get_service_mut::<RepairStation>(id).fix(system, percent, player, car); }
         }
     }  
 

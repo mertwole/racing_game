@@ -4,6 +4,7 @@ use crate::engine::billboards::*;
 use crate::engine::common::{IVec2, LineSegment, Geometry};
 use crate::game::player::Player;
 use crate::game::Game;
+use crate::game::ride::car::Car;
 
 pub mod city;
 pub mod road_path;
@@ -250,7 +251,7 @@ impl CityMap {
                 ServicesSubsetProperties { 
                     gas_station_count : 3,  
                     hostel_count : 3,
-                    repair_station_count : 0,
+                    repair_station_count : 3,
                     shop_count : 0
                 }, 
             rng));
@@ -344,7 +345,7 @@ impl CityMap {
         self.services.get_service::<T>(id)
     }
 
-    pub fn process_service_action(&mut self, service_id : ServiceId, action : ServiceAction, player : &mut Player) { 
-        self.services.process_action(service_id, action, player);
+    pub fn process_service_action(&mut self, service_id : ServiceId, action : ServiceAction, player : &mut Player, car : &mut Car) { 
+        self.services.process_action(service_id, action, player, car);
     }
 }

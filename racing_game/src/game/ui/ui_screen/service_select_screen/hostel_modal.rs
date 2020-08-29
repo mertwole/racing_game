@@ -12,7 +12,7 @@ pub struct HostelModal {
     selected_service : ServiceId,
     font : Rc<Font>,
     resolution : IVec2,
-    pub modal : ModalPage
+    modal : ModalPage
 }
 
 impl HostelModal {
@@ -39,7 +39,6 @@ impl ServiceModal for HostelModal {
         for i in 0..hostel.options.len() {
             let time = hostel.options[i].time.clone();
             let cost = hostel.options[i].cost;
-            println!("{}", format!("REST {}H. {}M. FOR {}$", time.hr, time.min, cost));
             menu_items.push(UISelectorItem::new(
                 Box::from(UIText::new(self.font.clone(), format!("REST {}H. {}M. FOR {}$", time.hr, time.min, cost))),
                 ControlProperties::new(IVec2::new(0, -(i as isize) * 20), Pivot::Center, Binding::Center),
@@ -92,7 +91,7 @@ impl ServiceModal for HostelModal {
 
         self.modal.update(delta_time);
 
-        return Vec::new();
+        Vec::new()
     }
 
     fn select_service(&mut self, id : ServiceId) {
@@ -101,5 +100,4 @@ impl ServiceModal for HostelModal {
 
     fn modal(&self) -> &ModalPage { &self.modal }
     fn modal_mut(&mut self) -> &mut ModalPage { &mut self.modal }
-
 }

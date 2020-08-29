@@ -10,7 +10,7 @@ use crate::engine::traffic::*;
 use crate::engine::common::{IVec2, ImageOps};
 use super::{EventType, InputEvent};
 
-mod car;
+pub mod car;
 use car::*;
 
 pub struct Ride {

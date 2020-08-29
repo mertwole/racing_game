@@ -113,6 +113,10 @@ impl Car {
         }
     }
 
+    pub fn fix_system(&mut self, system : CarSystem, percent : Percent) {
+        self.damage.car_systems.get_mut(&system).unwrap().0 += percent.0;
+    }
+
     pub fn update(&mut self, delta_time : f32) {
         let steer = match self.input_horz {
             Some(InputEvent::CarLeft) => { -1.0 }
@@ -159,7 +163,7 @@ enum Characteristic {
 }
 
 #[derive(Hash, PartialEq, Eq)]
-enum System {
+pub enum CarSystem {
     Wheels,
     Transmission,
     Chase,
@@ -170,17 +174,17 @@ enum System {
 
 struct DamageEffect {
     characteristic : Characteristic,
-    system : System,
+    car_system : CarSystem,
     multiplier_when_fully_broken : f32
 }
 
 impl DamageEffect {
-    fn new(characteristic : Characteristic, system : System, multiplier_when_fully_broken : f32) -> DamageEffect {
-        DamageEffect { characteristic, system, multiplier_when_fully_broken }
+    fn new(characteristic : Characteristic, car_system : CarSystem, multiplier_when_fully_broken : f32) -> DamageEffect {
+        DamageEffect { characteristic, car_system, multiplier_when_fully_broken }
     }
 
     fn apply(&self, characteristicts : &mut Characteristics, damage : &Damage) {
-        let multiplier = Math::lerp(1.0, self.multiplier_when_fully_broken, damage.systems.get(&self.system).unwrap().to_norm());
+        let multiplier = Math::lerp(1.0, self.multiplier_when_fully_broken, damage.car_systems.get(&self.car_system).unwrap().to_norm());
         match self.characteristic {
             Characteristic::Acceleration => { characteristicts.acceleration *= multiplier; }
             Characteristic::Deceleration => { characteristicts.deceleration *= multiplier; }
@@ -193,19 +197,19 @@ impl DamageEffect {
 }
 
 struct Damage {
-    systems : HashMap<System, Percent>,
+    car_systems : HashMap<CarSystem, Percent>,
     effects : Vec<DamageEffect>
 }
 
 impl Damage {
     fn void () -> Damage {
-        let systems = HashMap::<System, Percent>::new();
+        let car_systems = HashMap::<CarSystem, Percent>::new();
 
         let mut effects = vec![
-            DamageEffect::new(Characteristic::Deceleration, System::Brake, 0.5)
+            DamageEffect::new(Characteristic::Deceleration, CarSystem::Brake, 0.5)
         ];
 
-        Damage { systems, effects }
+        Damage { car_systems, effects }
     }
 
     fn affect_characteristics(&self, mut characteristics : Characteristics) -> Characteristics {
