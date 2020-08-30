@@ -23,11 +23,11 @@ use shop_modal::*;
 use repair_station_modal::*;
 
 pub trait ServiceModal { 
-    fn opened(&mut self, game : &Game);
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent>;
     fn select_service(&mut self, id : ServiceId);
-    fn modal(&self) -> &ModalPage;
-    fn modal_mut(&mut self) -> &mut ModalPage;
+    fn unfold(&mut self, game : &Game);
+    fn is_busy(&self) -> bool;
+    fn draw(&self, buffer : &mut RgbImage);
 }
 
 pub enum ServiceModalEvent {
@@ -149,7 +149,7 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
                             match menu_event {
                                 MenuEvents::Select(id) => { 
                                     self.service_modal.select_service(id);
-                                    self.service_modal.modal_mut().start_anim_unfold(1000.0);
+                                    self.service_modal.unfold(self.game.as_ref().unwrap());
                                     self.state = State::OpeningModalWindow;
                                 },
                                 MenuEvents::Back => { 
@@ -171,13 +171,12 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
                 }
             }
             State::OpeningModalWindow => {
-                if self.service_modal.modal().anim_state == ModalAnim::Void { 
-                    self.service_modal.opened(self.game.as_ref().unwrap());
+                if !self.service_modal.is_busy() { 
                     self.state = State::ActionsInService; 
                 }
             }
             State::ClosingModalWindow => {
-                if self.service_modal.modal().anim_state == ModalAnim::Void { 
+                if !self.service_modal.is_busy() { 
                     self.state = State::SelectingService; 
                 }
             }
@@ -190,6 +189,6 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
 
     fn render(&self, buffer : &mut RgbImage) {
         self.menu.as_ref().unwrap().draw(buffer);
-        self.service_modal.modal().draw(buffer);
+        self.service_modal.draw(buffer);
     }
 }

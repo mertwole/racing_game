@@ -162,7 +162,7 @@ enum Characteristic {
     GasMileage
 }
 
-#[derive(Hash, PartialEq, Eq)]
+#[derive(Hash, PartialEq, Eq, Copy, Clone)]
 pub enum CarSystem {
     Wheels,
     Transmission,
@@ -203,7 +203,14 @@ struct Damage {
 
 impl Damage {
     fn void () -> Damage {
-        let car_systems = HashMap::<CarSystem, Percent>::new();
+        let mut car_systems = HashMap::<CarSystem, Percent>::new();
+        
+        car_systems.insert(CarSystem::Brake, Percent(100.0));
+        car_systems.insert(CarSystem::Chase, Percent(100.0));
+        car_systems.insert(CarSystem::Engine, Percent(100.0));
+        car_systems.insert(CarSystem::Starter, Percent(100.0));
+        car_systems.insert(CarSystem::Transmission, Percent(100.0));
+        car_systems.insert(CarSystem::Wheels, Percent(100.0));
 
         let mut effects = vec![
             DamageEffect::new(Characteristic::Deceleration, CarSystem::Brake, 0.5)

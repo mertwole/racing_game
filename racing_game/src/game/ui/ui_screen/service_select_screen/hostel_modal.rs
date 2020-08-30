@@ -31,7 +31,7 @@ impl HostelModal {
 struct OptionSelect(usize);
 
 impl ServiceModal for HostelModal {
-    fn opened(&mut self, game : &Game) {
+    fn unfold(&mut self, game : &Game) { 
         let pointer_image = Game::load_image_rgba("ui/pointer.png");
         let mut menu_items = Vec::new();
 
@@ -48,9 +48,12 @@ impl ServiceModal for HostelModal {
 
         let pointer_offset = IVec2::new(-(pointer_image.width() as isize), 0);
         let option_selector = UISelector::<OptionSelect>::new(menu_items, SelectionType::Vertical, pointer_image, pointer_offset, self.resolution.clone(), None);
+        self.modal.clear_controls();
         self.modal.add_control(Box::from(option_selector), ControlProperties { position : IVec2::zero(), pivot : Pivot::LeftBottom, binding : Binding::LeftBottom });
-    }   
 
+        self.modal.start_anim_unfold(1000.0); 
+    }
+    
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent> {
         let hostel = game.city_map.get_service::<Hostel>(self.selected_service);
         let player_money = game.player.money;
@@ -94,10 +97,9 @@ impl ServiceModal for HostelModal {
         Vec::new()
     }
 
-    fn select_service(&mut self, id : ServiceId) {
-        self.selected_service = id;
-    }
+    fn select_service(&mut self, id: ServiceId) { self.selected_service = id; }
 
-    fn modal(&self) -> &ModalPage { &self.modal }
-    fn modal_mut(&mut self) -> &mut ModalPage { &mut self.modal }
+    fn is_busy(&self) -> bool { self.modal.anim_state != ModalAnim::Void }
+
+    fn draw(&self, buffer : &mut RgbImage) { self.modal.draw(buffer); }
 }

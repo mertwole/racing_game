@@ -27,20 +27,16 @@ impl ShopModal {
     }
 }
 
-impl ServiceModal for ShopModal {
-    fn opened(&mut self, game : &Game) {
-        
-    }
-    
+impl ServiceModal for ShopModal {  
+    fn unfold(&mut self, game : &Game) { self.modal.start_anim_unfold(1000.0); }
+
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent> {
         Vec::new()
     }
 
-    fn select_service(&mut self, id : ServiceId) {
-        self.selected_service = id;
-    }
+    fn select_service(&mut self, id: ServiceId) { self.selected_service = id; }
 
-    fn modal(&self) -> &ModalPage { &self.modal }
-    fn modal_mut(&mut self) -> &mut ModalPage { &mut self.modal }
+    fn is_busy(&self) -> bool { self.modal.anim_state != ModalAnim::Void }
 
+    fn draw(&self, buffer : &mut RgbImage) { self.modal.draw(buffer); }
 }

@@ -10,7 +10,7 @@ use crate::game::ride::car::*;
 pub struct RepairStation {
     logo : Rc<RgbaImage>,
     diagnosis_cost : f32,
-    repair_costs : HashMap<CarSystem, f32>
+    pub repair_costs : HashMap<CarSystem, f32>
 }   
 
 impl RepairStation {

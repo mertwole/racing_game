@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use image::RgbImage;
+
 use crate::engine::common::{IVec2, Math};
 use crate::engine::ui::font::*;
 use crate::engine::ui::*;
@@ -10,7 +12,7 @@ use super::*;
 
 pub struct GasStationModal{
     buy_gas_amount : u32,
-    selected_station : ServiceId,
+    selected_service : ServiceId,
     font : Rc<Font>,
     pub modal : ModalPage
 }
@@ -20,7 +22,7 @@ impl GasStationModal {
         let modal = ModalPage::new(IVec2::new(100, 100), IVec2::new(200, 100), Some(Rgb([150, 150, 150])));
         GasStationModal { 
             buy_gas_amount : 0,
-            selected_station : ServiceId(0),
+            selected_service : ServiceId(0),
             font,
             modal
         }
@@ -28,12 +30,10 @@ impl GasStationModal {
 }
 
 impl ServiceModal for GasStationModal {
-    fn opened(&mut self, game : &Game) {
-        
-    }
+    fn unfold(&mut self, game : &Game) { self.modal.start_anim_unfold(1000.0); }
     
     fn update(&mut self, game : &Game, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<ServiceModalEvent> {
-        let gas_station = game.city_map.get_service::<GasStation>(self.selected_station);
+        let gas_station = game.city_map.get_service::<GasStation>(self.selected_service);
         let player_money = game.player.money;
 
         for (event, event_type) in input {
@@ -49,7 +49,7 @@ impl ServiceModal for GasStationModal {
                 (InputEvent::UISelect, EventType::Pressed) => { 
                     return vec![
                         ServiceModalEvent::UIEvent(
-                            UIEvent::ServiceAction(self.selected_station, ServiceAction::BuyGas(self.buy_gas_amount))
+                            UIEvent::ServiceAction(self.selected_service, ServiceAction::BuyGas(self.buy_gas_amount))
                         )
                     ]; 
                 }
@@ -73,10 +73,9 @@ impl ServiceModal for GasStationModal {
         return Vec::new();
     }
 
-    fn select_service(&mut self, id: ServiceId) {
-        self.selected_station = id;
-    }
+    fn select_service(&mut self, id: ServiceId) { self.selected_service = id; }
 
-    fn modal_mut(&mut self) -> &mut ModalPage { &mut self.modal } 
-    fn modal(&self) -> &ModalPage { &self.modal } 
+    fn is_busy(&self) -> bool { self.modal.anim_state != ModalAnim::Void }
+
+    fn draw(&self, buffer : &mut RgbImage) { self.modal.draw(buffer); }
 }
