@@ -34,7 +34,7 @@ pub struct TrackData {
     length : f32,
     heels : Vec<Heel>,
     curvatures : Vec<Curvature>,
-    pub(super) roads : Vec<Road>
+    pub roads : Vec<Road>
 }
 
 pub enum OffsetMode {

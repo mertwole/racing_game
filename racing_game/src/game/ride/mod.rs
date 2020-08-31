@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use image::{RgbImage, RgbaImage};
 
 use super::city_map::road_path::RoadPathMeta;
@@ -18,7 +20,7 @@ pub struct Ride {
     billboards : Billboards,
     length : f32,
     horizon : Horizon,
-    traffic : Traffic,
+    traffic : Option<Traffic>,
     camera : Camera,
     active : bool,
     paused : bool,
@@ -51,7 +53,7 @@ impl Ride {
             active : false,
             paused : false,
             player : None,
-            traffic : Traffic::new()
+            traffic : None
         }
     }
 
@@ -59,18 +61,20 @@ impl Ride {
         self.paused = paused;
     }
 
-    pub fn start_ride(&mut self, ride_data : RoadPathMeta, player : Player) {
+    pub fn start_ride(&mut self, mut ride_data : RoadPathMeta, player : Player) {
         self.active = true;
         self.camera.road_distance = 0.0;
         self.length = ride_data.length;
 
-        self.player = Some(player);
-        self.traffic = ride_data.traffic;
-
-        self.car.reset();
-
         self.billboards = ride_data.billboards;
         self.track = Some(Track::new(ride_data.track_data));
+
+        self.player = Some(player);
+        let track_rc = unsafe { Rc::from_raw(self.track.as_ref().unwrap() as *const Track) };
+        ride_data.traffic.set_track(track_rc);
+        self.traffic = Some(ride_data.traffic);
+
+        self.car.reset();
     }
 
     pub fn process_input(&mut self, input : &Vec<(InputEvent, EventType)>) {
@@ -83,7 +87,7 @@ impl Ride {
 
         self.car.update(delta_time);
 
-        self.traffic.update(&self.camera, delta_time, &mut self.billboards);
+        self.traffic.as_mut().unwrap().update(&self.camera, delta_time, &mut self.billboards);
 
         let mut events : Vec<RideEvent> = Vec::new();
 

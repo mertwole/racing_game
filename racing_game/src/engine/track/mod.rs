@@ -17,7 +17,7 @@ pub struct YData {
 }
 
 pub struct Track {
-    data : TrackData,
+    pub data : TrackData,
     lines_density : f32,
     pub y_data : Vec<YData>,
 

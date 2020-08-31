@@ -57,7 +57,7 @@ impl Road {
         None
     }
 
-    fn get_segment_offset(&self, road_distance : f32) -> Option<f32> {
+    pub fn get_segment_offset(&self, road_distance : f32) -> Option<f32> {
         if road_distance < self.start || road_distance > self.end { return None; }
 
         for i in 0..self.keypoints.len() {

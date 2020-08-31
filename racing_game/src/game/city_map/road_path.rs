@@ -48,6 +48,8 @@ impl RoadPath {
             if curr_dist + end_straight_len > length { break; }
         }
 
+        curvatures.clear();
+
         let heels = vec![
             //Heel::new(0.0, 50.0, 0.0, 0.003),
             //Heel::new(50.0, 100.0, 0.003, 0.0),
@@ -56,7 +58,7 @@ impl RoadPath {
         let mut roads = Vec::new();
         roads.push(Road::new(
             1.0, 
-            vec![KeyPoint::new(0.0, 0.0), KeyPoint::new(10.0, 0.0), KeyPoint::new(30.0, 1.0), KeyPoint::new(50.0, 0.0), KeyPoint::new(length, 0.0)], 
+            vec![KeyPoint::new(0.0, 0.0), KeyPoint::new(10.0, 0.0), KeyPoint::new(30.0, 4.0), KeyPoint::new(50.0, 0.0), KeyPoint::new(length, 0.0)], 
             Rc::from(Game::load_image_rgb("road_tex.png"))
         ));
         let track_data = TrackData::new(length, curvatures, heels, roads);
@@ -69,9 +71,10 @@ impl RoadPath {
         billboards.add_static(billboard_factories[0].construct(86.0, 1.1));
         billboards.add_static(billboard_factories[0].construct(89.0, 1.1));
 
-        let mut traffic = Traffic::new();
+        let mut traffic = Traffic::new(1.0);
         let traffic_car_billboard = BillboardFactory::new(&Game::load_image_rgba("test_spritesheet.png"), Game::load_file("test_spritesheet.meta"));
-        traffic.add_car(traffic_car_billboard.construct(10.0, 0.0), -1.0, &mut billboards);
+        let car = TrafficCar::new(traffic_car_billboard.construct(10.0, 0.0), 0.5, 1.0, 1.0);
+        traffic.add_car(&mut billboards, car);
 
         let meta = RoadPathMeta { track_data : track_data, length, billboards, traffic };
         self.meta = Some(meta);
