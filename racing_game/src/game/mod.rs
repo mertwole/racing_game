@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::iter;
 
 extern crate include_dir;
 extern crate rand;
@@ -31,7 +32,7 @@ pub const SCREEN_RESOLUTION : IVec2 = IVec2 { x : 640, y : 360 };
 pub struct Game {
     window : Window,
     render : Render,
-    input : Input<InputEvent>,
+    pub input : Input<InputEvent>,
 
     player : Player,
 
@@ -55,7 +56,9 @@ pub enum InputEvent{
 
     UISelect,
     UIBack,
-    UIMenu
+    UIMenu,
+
+    AnyKey(Key)
 }
 
 #[derive(Copy, Clone)]
@@ -131,7 +134,12 @@ impl Game {
     }
 
     fn update(&mut self, delta_time : f32) {
-        let input_queue = self.input.process(&mut self.window); 
+        let key_events = self.window.get_events();
+        let mut input_queue : Vec<(InputEvent, EventType)> = Vec::with_capacity(key_events.len());
+        for (key, event_type) in &key_events {
+            input_queue.push((InputEvent::AnyKey(*key), *event_type));
+        }
+        input_queue.append(&mut self.input.process(key_events));
 
         let ui_events = self.ui.update(&input_queue, delta_time);
 
@@ -153,6 +161,9 @@ impl Game {
                     self.ride.set_paused(paused);
                 }
                 UIEvent::ChangeScreen(_) => { }
+                UIEvent::BindKey(action, key) => { 
+                    self.input.override_action_binding(action, key); 
+                }
             } 
         }
 

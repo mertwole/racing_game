@@ -48,8 +48,6 @@ impl RoadPath {
             if curr_dist + end_straight_len > length { break; }
         }
 
-        curvatures.clear();
-
         let heels = vec![
             //Heel::new(0.0, 50.0, 0.0, 0.003),
             //Heel::new(50.0, 100.0, 0.003, 0.0),
@@ -58,7 +56,7 @@ impl RoadPath {
         let mut roads = Vec::new();
         roads.push(Road::new(
             1.0, 
-            vec![KeyPoint::new(0.0, 0.0), KeyPoint::new(10.0, 0.0), KeyPoint::new(30.0, 4.0), KeyPoint::new(50.0, 0.0), KeyPoint::new(length, 0.0)], 
+            vec![KeyPoint::new(0.0, 0.0), KeyPoint::new(10.0, 0.0), KeyPoint::new(30.0, 2.0), KeyPoint::new(50.0, 0.0), KeyPoint::new(length, 0.0)], 
             Rc::from(Game::load_image_rgb("road_tex.png"))
         ));
         let track_data = TrackData::new(length, curvatures, heels, roads);

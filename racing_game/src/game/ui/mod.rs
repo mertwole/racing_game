@@ -5,6 +5,7 @@ use image::RgbImage;
 
 use crate::engine::common::IVec2;
 use super::{Game, EventType, InputEvent, Player};
+use crate::engine::window::Key;
 use super::services::*;
 
 mod ui_screen;
@@ -16,7 +17,8 @@ pub enum UIEvent{
     ChangePlayer(Player),
     ChangeScreen(Screen),
     ServiceAction(ServiceId, ServiceAction),
-    SetRidePaused(bool)
+    SetRidePaused(bool),
+    BindKey(InputEvent, Key)
 }
 
 pub struct UI {

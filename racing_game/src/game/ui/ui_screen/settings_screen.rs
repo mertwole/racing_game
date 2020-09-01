@@ -104,7 +104,6 @@ impl SettingsScreen {
         let pointer_offset = IVec2::new(0, -((pointer_image.height() / 2) as isize));
         let music_volume = UISelector::new(music_volume_steps, SelectionType::Horizontal, pointer_image, pointer_offset, *resolution, None);
 
-
         let mut sfx_volume_steps : Vec<UISelectorItem<Volume>> = Vec::new();
         for i in 0..12 {
             sfx_volume_steps.push(UISelectorItem::new(

@@ -9,11 +9,11 @@ pub enum EventType{
     Released
 }
 
-pub struct Input<T : Sized + Copy + Clone>{
+pub struct Input<T : Sized + Copy + Clone + PartialEq>{
     key_bindings : HashMap<Key, Vec<T>>
 }
 
-impl<T : Sized + Copy + Clone> Input<T>{
+impl<T : Sized + Copy + Clone + PartialEq> Input<T>{
     pub fn new() -> Input<T> {
         let key_bindings = HashMap::<Key, Vec<T>>::new();
         Input { key_bindings }
@@ -27,9 +27,28 @@ impl<T : Sized + Copy + Clone> Input<T>{
         }
     }
 
-    pub fn process(&mut self, window : &mut Window) -> Vec<(T, EventType)> {
-        window
-        .get_events()
+    pub fn override_action_binding(&mut self, action : T, key : Key) {
+        'outer : for (key, actions) in &mut self.key_bindings {
+            for i in 0..actions.len() {
+                if actions[i] == action { actions.remove(i); break 'outer; }
+            }
+        }
+
+        self.bind_action(action, key);
+    }
+
+    pub fn get_action_key(&self, action : T) -> Option<Key> {
+        for (key, actions) in &self.key_bindings {
+            for act in actions {
+                if *act == action { return Some(*key); }
+            }
+        }
+
+        None
+    }
+
+    pub fn process(&mut self, events : Vec<(Key, EventType)>) -> Vec<(T, EventType)> {
+        events
         .into_iter()
         .map(|(key, event_type)| (self.key_bindings.get(&key), event_type))
         .filter(|(actions, _)| actions.is_some())

@@ -79,6 +79,10 @@ impl UIPage {
         self.controls = Vec::new();
     }
 
+    pub fn get_control_mut(&mut self, id : usize) -> &mut UIControl {
+        self.controls[id].as_mut()
+    }
+
     pub fn draw(&self, buffer : &mut RgbImage) {
         match self.background_color {
             Some(color) => { 
