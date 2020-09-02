@@ -7,6 +7,7 @@ use crate::engine::common::{IVec2, ImageOps};
 use crate::engine::ui::font::*;
 use crate::engine::ui::*;
 use crate::engine::window::Key;
+use crate::game::key_name::*;
 use crate::game::{Game, InputEvent, EventType};
 use crate::game::ui::{UIEvent, Screen};
 
@@ -24,8 +25,11 @@ enum MenuEvents {
 
 pub struct ControlSettingsScreen{
     page : UIPage,
-    key_binding_control_ids : HashMap<MenuEvents, usize>,
-    binding_action : Option<MenuEvents>
+    menu : UISelector<MenuEvents>,
+    binding_action : Option<MenuEvents>,
+    font : Rc<Font>,
+    game : Option<Rc<Game>>,
+    refresh_control_names : bool
 }
 
 impl ControlSettingsScreen {
@@ -67,55 +71,79 @@ impl ControlSettingsScreen {
         let pointer_offset = IVec2::new(-(pointer_image.width() as isize), 0);
         let menu = UISelector::new(menu_items, SelectionType::Vertical, pointer_image, pointer_offset, resolution.clone(), None);
 
-        let mut page = UIPage::new(*resolution, Some(Rgb([0, 0, 0])));
-        page.add_control(Box::from(menu), &ControlProperties { pivot : Pivot::Center, binding : Binding::Center, position : IVec2::new(0, 0) });
+        let page = UIPage::new(*resolution, Some(Rgb([0, 0, 0])));
 
-        let mut key_binding_control_ids = HashMap::new();
-        key_binding_control_ids.insert(MenuEvents::SteerLeft, 0);
-        key_binding_control_ids.insert(MenuEvents::SteerRight, 1);
-        key_binding_control_ids.insert(MenuEvents::Gas, 2);
-        key_binding_control_ids.insert(MenuEvents::Brake, 3);
-
-        let steer_left_label = Box::from(UIText::new(font.clone(), String::from("LEFT ARROW")));
-        page.add_control(steer_left_label, &ControlProperties { pivot : Pivot::LeftBottom, binding : Binding::Center, position : IVec2::new(10, 40) });
-
-        let steer_right_label = Box::from(UIText::new(font.clone(), String::from("RIGHT ARROW")));
-        page.add_control(steer_right_label, &ControlProperties { pivot : Pivot::LeftBottom, binding : Binding::Center, position : IVec2::new(10, 20) });
-
-        let gas_label = Box::from(UIText::new(font.clone(), String::from("UP ARROW")));
-        page.add_control(gas_label, &ControlProperties { pivot : Pivot::LeftBottom, binding : Binding::Center, position : IVec2::new(10, 0) });
-
-        let brake_label = Box::from(UIText::new(font.clone(), String::from("DOWN ARROW")));
-        page.add_control(brake_label, &ControlProperties { pivot : Pivot::LeftBottom, binding : Binding::Center, position : IVec2::new(10, -20) });
-
-        ControlSettingsScreen { page, key_binding_control_ids, binding_action : None }
+        ControlSettingsScreen { page, menu, binding_action : None, font, game : None, refresh_control_names : false }
     }
 
-    fn get_bound_key_name(&self, action : MenuEvents) -> String {
-        String::from("")
+    fn refresh_control_names(&mut self) {
+        self.page.clear_controls();
+        let game = self.game.as_ref().unwrap();
+
+        let actions = vec![InputEvent::CarLeft, InputEvent::CarRight, InputEvent::CarGas, InputEvent::CarBrake];
+        let positions = vec![40, 20, 0, -20];
+        for (action, position) in actions.into_iter().zip(positions.into_iter()) {
+            let bound_key = game.input.get_action_key(action);
+            let bound_key = if bound_key.is_none() { String::from("UNBOUND") } else { bound_key.unwrap().key_name().unwrap_or(String::from("UNKNOWN")).to_uppercase() };
+            let label = Box::from(UIText::new(self.font.clone(), bound_key));
+            self.page.add_control(label, &ControlProperties { pivot : Pivot::LeftBottom, binding : Binding::Center, position : IVec2::new(10, position) });
+        }
     }
 }
 
 impl UIScreen for ControlSettingsScreen {
     fn init(&mut self, game : &Game) {
-        
+        self.game = unsafe { Some(Rc::from_raw(game as *const Game)) };
+
+        self.refresh_control_names();
     }   
 
     fn update(&mut self, input : &Vec<(InputEvent, EventType)>, delta_time : f32) -> Vec<UIEvent> {
-        let menu = unsafe { &mut *(self.page.get_control_mut(0) as *mut dyn UIControl as *mut UISelector<MenuEvents>) };
-
+        if self.refresh_control_names {
+            self.refresh_control_names = false;
+            self.refresh_control_names();
+        }
+        
         for (event, event_type) in input {
             match (event, event_type) {
-                (InputEvent::UIDown, EventType::Pressed) => { menu.select_next_in_direction(&IVec2::new(0, -1)); }
-                (InputEvent::UIUp, EventType::Pressed) => { menu.select_next_in_direction(&IVec2::new(0, 1)); }
-                (InputEvent::UISelect, EventType::Pressed) => { 
-                    let menu_event = menu.select_current();
-                    match menu_event {
-                        MenuEvents::Back => { return vec![UIEvent::ChangeScreen(Screen::Settings)]; } // TODO : go back
-                        _ => { self.binding_action = Some(menu_event); }
+                (InputEvent::UIDown, EventType::Pressed) => { 
+                    if self.binding_action.is_none() {
+                        self.menu.select_next_in_direction(&IVec2::new(0, -1)); 
+                        continue;
                     }
                 }
-                (InputEvent::AnyKey(key), EventType::Pressed) => { println!("{}", key.get_name().unwrap_or(String::from("unexpected"))); }
+                (InputEvent::UIUp, EventType::Pressed) => { 
+                    if self.binding_action.is_none() {
+                        self.menu.select_next_in_direction(&IVec2::new(0, 1)); 
+                        continue;
+                    }
+                }
+                (InputEvent::UISelect, EventType::Pressed) => { 
+                    if self.binding_action.is_none() {
+                        let menu_event = self.menu.select_current();
+                        match menu_event {
+                            MenuEvents::Back => { return vec![UIEvent::ChangeScreen(Screen::Settings)]; } // TODO : go back
+                            _ => { self.binding_action = Some(menu_event); }
+                        }
+                        continue;
+                    }
+                }
+                (InputEvent::AnyKey(key), EventType::Pressed) => { 
+                    if self.binding_action.is_none() { continue; }
+                    let key_name = key.key_name();
+                    if key_name.is_some() {
+                        let action = match self.binding_action.unwrap() {
+                            MenuEvents::SteerLeft => { InputEvent::CarLeft }
+                            MenuEvents::SteerRight => { InputEvent::CarRight }
+                            MenuEvents::Gas => { InputEvent::CarGas }
+                            MenuEvents::Brake => { InputEvent::CarBrake }
+                            MenuEvents::Back => { panic!(); }
+                        };
+                        self.binding_action = None;
+                        self.refresh_control_names = true;
+                        return vec![UIEvent::BindKey(action, *key)];
+                    }
+                }
                 _ => { }
             }
         }
@@ -125,5 +153,6 @@ impl UIScreen for ControlSettingsScreen {
 
     fn render(&self, buffer : &mut RgbImage) {
         self.page.draw(buffer);
+        self.menu.draw(buffer);
     }
 }

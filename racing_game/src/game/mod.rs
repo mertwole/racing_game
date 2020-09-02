@@ -26,6 +26,8 @@ use player::*;
 mod ui;
 use ui::*;
 
+pub mod key_name;
+
 pub const RESOURCES_DIR : Dir = include_dir!("./resources");
 pub const SCREEN_RESOLUTION : IVec2 = IVec2 { x : 640, y : 360 };
 
