@@ -29,7 +29,8 @@ pub struct ControlSettingsScreen{
     binding_action : Option<MenuEvents>,
     font : Rc<Font>,
     game : Option<Rc<Game>>,
-    refresh_control_names : bool
+    refresh_control_names : bool,
+    unbound : Option<MenuEvents>
 }
 
 impl ControlSettingsScreen {
@@ -73,7 +74,17 @@ impl ControlSettingsScreen {
 
         let page = UIPage::new(*resolution, Some(Rgb([0, 0, 0])));
 
-        ControlSettingsScreen { page, menu, binding_action : None, font, game : None, refresh_control_names : false }
+        ControlSettingsScreen { page, menu, binding_action : None, font, game : None, refresh_control_names : false, unbound : None }
+    }
+
+    fn input_event_to_menu_event(event : InputEvent) -> MenuEvents {
+        match event {
+            InputEvent::CarLeft => { MenuEvents::SteerLeft }
+            InputEvent::CarRight => { MenuEvents::SteerRight }
+            InputEvent::CarGas => { MenuEvents::Gas }
+            InputEvent::CarBrake => { MenuEvents::Brake }
+            _ => { panic!(); }
+        }
     }
 
     fn refresh_control_names(&mut self) {
@@ -84,7 +95,10 @@ impl ControlSettingsScreen {
         let positions = vec![40, 20, 0, -20];
         for (action, position) in actions.into_iter().zip(positions.into_iter()) {
             let bound_key = game.input.get_action_key(action);
-            let bound_key = if bound_key.is_none() { String::from("UNBOUND") } else { bound_key.unwrap().key_name().unwrap_or(String::from("UNKNOWN")).to_uppercase() };
+            let mut bound_key = if bound_key.is_none() { String::from("UNBOUND") } else { bound_key.unwrap().key_name().unwrap_or(String::from("UNKNOWN")).to_uppercase() };
+            if self.unbound.is_some() && self.unbound.unwrap() == Self::input_event_to_menu_event(action) {
+                bound_key = String::from("PRESS KEY TO BIND");
+            }
             let label = Box::from(UIText::new(self.font.clone(), bound_key));
             self.page.add_control(label, &ControlProperties { pivot : Pivot::LeftBottom, binding : Binding::Center, position : IVec2::new(10, position) });
         }
@@ -103,7 +117,7 @@ impl UIScreen for ControlSettingsScreen {
             self.refresh_control_names = false;
             self.refresh_control_names();
         }
-        
+
         for (event, event_type) in input {
             match (event, event_type) {
                 (InputEvent::UIDown, EventType::Pressed) => { 
@@ -123,7 +137,11 @@ impl UIScreen for ControlSettingsScreen {
                         let menu_event = self.menu.select_current();
                         match menu_event {
                             MenuEvents::Back => { return vec![UIEvent::ChangeScreen(Screen::Settings)]; } // TODO : go back
-                            _ => { self.binding_action = Some(menu_event); }
+                            _ => { 
+                                self.binding_action = Some(menu_event); 
+                                self.unbound = Some(menu_event);
+                                self.refresh_control_names();
+                            }
                         }
                         continue;
                     }
@@ -141,6 +159,7 @@ impl UIScreen for ControlSettingsScreen {
                         };
                         self.binding_action = None;
                         self.refresh_control_names = true;
+                        self.unbound = None;
                         return vec![UIEvent::BindKey(action, *key)];
                     }
                 }
