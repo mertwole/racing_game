@@ -66,8 +66,11 @@ pub enum InputEvent{
 #[derive(Copy, Clone)]
 pub struct Percent(pub f32);
 
-impl Percent { pub fn to_norm(&self) -> f32 { self.0 * 0.01 } }
-
+impl Percent { 
+    pub fn to_norm(&self) -> f32 { self.0 * 0.01 }
+    pub fn add(&mut self, rhs : Percent) { self.0 += rhs.0; if self.0 > 100.0 { self.0 = 100.0 } } 
+    pub fn sub(&mut self, rhs : Percent) { self.0 -= rhs.0; if self.0 < 0.0 { self.0 = 0.0 } } 
+}
 
 #[derive(Clone)]
 pub struct Time { pub hr : u32, pub min : u32 }

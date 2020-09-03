@@ -23,7 +23,8 @@ pub use shop::*;
 pub enum ServiceAction{
     BuyGas(u32),
     RestInHostel(u32),
-    FixCarSystem(CarSystem, Percent)
+    FixCarSystem(CarSystem, Percent),
+    BuyProduct(usize)
 }
 
 pub trait Service {
@@ -88,11 +89,18 @@ impl Services {
             repair_stations.push(Box::<dyn Service>::from(Box::from(rs)));
         }
 
+        let mut shops = Vec::new();
+        for i in 0..7 {
+            let sh_logo = Game::load_image_rgba(&*format!("logos/hostels/logo{}.png", i));
+            let sh = Shop::generate(sh_logo, rng);
+            shops.push(Box::<dyn Service>::from(Box::from(sh)));
+        }
+
         let mut services = HashMap::new();
         services.insert(ServiceType::GasStation, gas_stations);
         services.insert(ServiceType::Hostel, hostels);
         services.insert(ServiceType::RepairStation, repair_stations);
-        services.insert(ServiceType::Shop, Vec::new());
+        services.insert(ServiceType::Shop, shops);
 
         Services { services }
     }
@@ -130,6 +138,7 @@ impl Services {
             ServiceAction::BuyGas(amount) => { self.get_service_mut::<GasStation>(id).buy_gas(amount, player); }
             ServiceAction::RestInHostel(option_id) => { self.get_service_mut::<Hostel>(id).rest(option_id, player); }
             ServiceAction::FixCarSystem(system, percent) => { self.get_service_mut::<RepairStation>(id).fix(system, percent, player, car); }
+            ServiceAction::BuyProduct(product_id) => { self.get_service_mut::<Shop>(id).buy_product(product_id, player); }
         }
     }  
 

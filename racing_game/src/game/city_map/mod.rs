@@ -252,7 +252,7 @@ impl CityMap {
                     gas_station_count : 3,  
                     hostel_count : 3,
                     repair_station_count : 3,
-                    shop_count : 0
+                    shop_count : 3
                 }, 
             rng));
         }
