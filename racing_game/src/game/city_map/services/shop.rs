@@ -12,8 +12,8 @@ pub enum ProductType {
 }
 
 pub struct ShopProduct {
-    product_type : ProductType,
-    cost : f32
+    pub product_type : ProductType,
+    pub cost : f32
 }
 
 pub struct Shop {

@@ -38,6 +38,10 @@ impl Font {
     }
 
     pub fn get_symbol(&self, symbol : char) -> &RgbaImage {
-        &self.symbols.get(&symbol).unwrap()
+        let symbol_img = &self.symbols.get(&symbol);
+        if symbol_img.is_none() { 
+            panic!("Symbol [{}] is missing in font!", symbol);
+        }
+        symbol_img.unwrap()
     }
 }
