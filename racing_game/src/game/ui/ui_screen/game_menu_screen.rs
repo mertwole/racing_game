@@ -83,7 +83,7 @@ impl UIScreen for GameMenuScreen {
                         MenuEvents::Exit => { return vec![]; },
                     }
                 }
-                (InputEvent::UIMenu, EventType::Pressed) => { return vec![UIEvent::ChangeScreen(Screen::Game), UIEvent::SetRidePaused(false)]; }
+                (InputEvent::UIMenu, EventType::Pressed) => { return vec![UIEvent::PreviousScreen, UIEvent::SetRidePaused(false)]; }
                 _ => { }
             }
         }

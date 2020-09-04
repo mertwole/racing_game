@@ -165,7 +165,7 @@ impl UIScreen for SettingsScreen {
                 (InputEvent::UISelect, EventType::Pressed) => { 
                     match self.selected_menu_item {
                         MenuEvents::ControlSettings => { return vec![UIEvent::ChangeScreen(Screen::ControlSettings)]; },
-                        MenuEvents::Back => { return vec![UIEvent::ChangeScreen(Screen::GameMenu)]; },// TODO : add UndoScreen command. 
+                        MenuEvents::Back => { return vec![UIEvent::PreviousScreen]; },
 
                         MenuEvents::MusicVolume => { return vec![]; },
                         MenuEvents::SfxVolume => { return vec![]; }

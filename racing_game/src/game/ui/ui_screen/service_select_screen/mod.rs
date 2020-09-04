@@ -153,7 +153,7 @@ impl<T> UIScreen for ServiceSelectScreen<T> where T : Service + 'static {
                                     self.state = State::OpeningModalWindow;
                                 },
                                 MenuEvents::Back => { 
-                                    return vec![UIEvent::ChangeScreen(Screen::Services)]; 
+                                    return vec![UIEvent::PreviousScreen]; 
                                 } 
                             }
                         }

@@ -136,7 +136,7 @@ impl UIScreen for ControlSettingsScreen {
                     if self.binding_action.is_none() {
                         let menu_event = self.menu.select_current();
                         match menu_event {
-                            MenuEvents::Back => { return vec![UIEvent::ChangeScreen(Screen::Settings)]; } // TODO : go back
+                            MenuEvents::Back => { return vec![UIEvent::PreviousScreen]; }
                             _ => { 
                                 self.binding_action = Some(menu_event); 
                                 self.unbound = Some(menu_event);

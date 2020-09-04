@@ -166,6 +166,7 @@ impl Game {
                     self.ride.set_paused(paused);
                 }
                 UIEvent::ChangeScreen(_) => { }
+                UIEvent::PreviousScreen => { }
                 UIEvent::BindKey(action, key) => { 
                     self.input.override_action_binding(action, key); 
                 }
